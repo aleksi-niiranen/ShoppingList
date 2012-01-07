@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ShoppingList</string>
+    <string name="no_lists">No Shopping Lists</string>
+    <string name="save">Save</string>
+    <string name="shop">Shop</string>
+    <string name="list_menu_add_list">Add List</string>
+    <string name="edit_list">Edit List</string>
+    
+</resources>
