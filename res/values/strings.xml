@@ -7,5 +7,6 @@
     <string name="shop">Shop</string>
     <string name="list_menu_add_list">Add List</string>
     <string name="edit_list">Edit List</string>
+    <string name="delete_list">Delete</string>
     
 </resources>
