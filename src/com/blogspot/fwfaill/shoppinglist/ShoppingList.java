@@ -38,7 +38,7 @@ public class ShoppingList extends ListActivity {
 		startManagingCursor(shoppingListsCursor);
 		
 		// Create an array to specify the fields we want to display in the list
-		String[] from = new String[] {ShoppingListDbAdapter.KEY_SHOP};
+		String[] from = new String[] {ShoppingListDbAdapter.KEY_TITLE};
 		
 		// and an array of the fields we want to bind those fields to
 		int[] to = new int[]{R.id.text1};

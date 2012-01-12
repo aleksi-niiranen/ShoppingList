@@ -4,14 +4,19 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 
 public class EditList extends Activity {
 	
 	private EditText mShopText;
 	private Long mRowId;
 	private ShoppingListDbAdapter mDbHelper;
+	private static TableLayout tblItems;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +28,7 @@ public class EditList extends Activity {
 		setTitle(R.string.edit_list);
 		
 		mShopText = (EditText) findViewById(R.id.txtShopName);
+		tblItems = (TableLayout) findViewById(R.id.tblItems);
 		
 		mRowId = (savedInstanceState == null) ? null :
 			(Long) savedInstanceState.getSerializable(ShoppingListDbAdapter.KEY_ROWID);
@@ -33,9 +39,10 @@ public class EditList extends Activity {
 		
 		populateFields();
 		
-		Button saveButton = (Button) findViewById(R.id.btnSaveList);
+		Button saveList = (Button) findViewById(R.id.btnSaveList);
+		Button addItem = (Button) findViewById(R.id.btnAddItem);
 		
-		saveButton.setOnClickListener(new View.OnClickListener() {
+		saveList.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -43,6 +50,34 @@ public class EditList extends Activity {
 				finish();
 			}
 		});
+		
+		addItem.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				addItemRow();
+				
+			}
+		});
+	}
+	
+	private void addItemRow() {
+		TableRow tr = new TableRow(this);
+		tr.setLayoutParams(new LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+				android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+		
+		CheckBox pickedUp = new CheckBox(this);
+		EditText itemName = new EditText(this);
+		itemName.setWidth(295);
+		EditText itemQuantity = new EditText(this);
+		itemQuantity.setWidth(140);
+		itemName.setText("uusi itemi");
+		itemQuantity.setText("2 purkkia");
+		
+		tr.addView(pickedUp);
+		tr.addView(itemName);
+		tr.addView(itemQuantity);
+		tblItems.addView(tr);
 	}
 	
 	private void populateFields() {
@@ -50,7 +85,7 @@ public class EditList extends Activity {
 			Cursor shoppingList = mDbHelper.fetchShoppingList(mRowId);
 			startManagingCursor(shoppingList);
 			mShopText.setText(shoppingList.getString(
-					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_SHOP)));
+					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)));
 		}
 	}
 
