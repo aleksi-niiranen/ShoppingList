@@ -110,7 +110,7 @@ public class ShoppingListDbAdapter {
 	 * @param listId the id of the list the item belongs to
 	 * @return rowId or -1 if failed
 	 */
-	public long createShoppingListItem(String itemTitle, String quantity, int pickedUp, int listId) {
+	public long createShoppingListItem(String itemTitle, String quantity, int pickedUp, long listId) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_ITEM_TITLE, itemTitle);
 		initialValues.put(KEY_QUANTITY, quantity);
@@ -163,12 +163,27 @@ public class ShoppingListDbAdapter {
 	 * @throws SQLException if shopping list could not be found/retrieved
 	 */
 	public Cursor fetchShoppingList(long rowId) throws SQLException {
-		Cursor mCursor = mDb.query(true, DATABASE_TABLE_LIST, 
+		Cursor cursor = mDb.query(true, DATABASE_TABLE_LIST, 
 				new String[] {KEY_ROWID, KEY_TITLE}, KEY_ROWID + "=" + rowId, null, null, null, null, null);
-		if (mCursor != null) {
-			mCursor.moveToFirst();
+		if (cursor != null) {
+			cursor.moveToFirst();
 		}
-		return mCursor;
+		return cursor;
+	}
+	
+	/**
+	 * Return a Cursor positioned at the shopping list item that matches the given rowId
+	 * @param rowId id of the shopping list item to retrieve
+	 * @return Cursor positioned to matching shopping list item, if found
+	 * @throws SQLException if shopping list item could not be found/retrieved
+	 */
+	public Cursor fetchShoppingListItem(long rowId) throws SQLException {
+		Cursor cursor = mDb.query(true, DATABASE_TABLE_ITEM, new String[] {KEY_ROWID, KEY_ITEM_TITLE, KEY_QUANTITY, KEY_PICKED_UP, KEY_LIST_ID},
+				KEY_ROWID + "=" + rowId, null, null, null, null, null);
+		if (cursor != null) {
+			cursor.moveToFirst();
+		}
+		return cursor;
 	}
 	
 	/**

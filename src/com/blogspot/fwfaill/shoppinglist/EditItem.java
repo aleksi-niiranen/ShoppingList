@@ -1,29 +1,20 @@
 package com.blogspot.fwfaill.shoppinglist;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.View;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 
-public class EditList extends Activity {
-	
-	private static final int ACTIVITY_CREATE = 0;
-	private static final int ACTIVITY_EDIT = 1;
-	
-	// for menus
-	private static final int INSERT_ID = Menu.FIRST;
-	private static final int DELETE_ID = Menu.FIRST + 1;
-	
-	private EditText mListTitleText;
+public class EditItem extends Activity {
+
+	private EditText mNameText;
+	private EditText mQuantityText;
+	// the id of the item
 	private Long mRowId;
+	// the list id which the item belongs to
+	private Long mListRowId;
 	private ShoppingListDbAdapter mDbHelper;
 	
 	@Override
@@ -32,11 +23,13 @@ public class EditList extends Activity {
 		mDbHelper = new ShoppingListDbAdapter(this);
 		mDbHelper.open();
 		
-		setContentView(R.layout.editlist);
-		setTitle(R.string.edit_list);
+		setContentView(R.layout.edititem);
+		setTitle(R.string.edit_item);
 		
-		mListTitleText = (EditText) findViewById(R.id.txtShopName);
+		mNameText = (EditText) findViewById(R.id.item_title);
+		mQuantityText = (EditText) findViewById(R.id.item_quantity);
 		
+		mListRowId = getIntent().getLongExtra("listId", 0);
 		mRowId = (savedInstanceState == null) ? null :
 			(Long) savedInstanceState.getSerializable(ShoppingListDbAdapter.KEY_ROWID);
 		if (mRowId == null) {
@@ -46,10 +39,9 @@ public class EditList extends Activity {
 		
 		populateFields();
 		
-		Button saveList = (Button) findViewById(R.id.btnSaveList);
-		Button addItem = (Button) findViewById(R.id.btnAddItem);
+		Button saveItem = (Button) findViewById(R.id.btnSaveItem);
 		
-		saveList.setOnClickListener(new View.OnClickListener() {
+		saveItem.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -57,34 +49,19 @@ public class EditList extends Activity {
 				finish();
 			}
 		});
-		
-		addItem.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				addItemToList();
-				
-			}
-		});
 	}
-	
-	private void addItemToList() {
-		Intent i = new Intent(this, EditItem.class);
-		// pass the id of the list as argument
-		i.putExtra("listId", mRowId);
-		startActivityForResult(i, ACTIVITY_CREATE);
-	}
-	
+
 	private void populateFields() {
-		// TODO fetch list items
 		if (mRowId != null) {
 			Cursor shoppingList = mDbHelper.fetchShoppingList(mRowId);
 			startManagingCursor(shoppingList);
-			mListTitleText.setText(shoppingList.getString(
-					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)));
+			mNameText.setText(shoppingList.getString(
+					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_ITEM_TITLE)));
+			mQuantityText.setText(shoppingList.getString(
+					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_QUANTITY)));
 		}
 	}
-
+	
 	@Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -105,15 +82,16 @@ public class EditList extends Activity {
     }
     
     private void saveState() {
-		String listTitle = mListTitleText.getText().toString();
+		String itemName = mNameText.getText().toString();
+		String itemQuantity = mQuantityText.getText().toString();
 		
 		if (mRowId == null) {
-			long id = mDbHelper.createShoppingList(listTitle);
+			long id = mDbHelper.createShoppingListItem(itemName, itemQuantity, 0, mListRowId);
 			if (id > 0) {
 				mRowId = id;
 			}
 		} else {
-			mDbHelper.updateShoppingList(mRowId, listTitle);
+			mDbHelper.updateShoppingListItem(mRowId, itemName, itemQuantity, 0);
 		}
 	}
     

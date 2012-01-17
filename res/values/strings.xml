@@ -8,6 +8,7 @@
     <string name="list_menu_add_list">Add List</string>
     <string name="add_item">Add Item</string>
     <string name="edit_list">Edit List</string>
+    <string name="edit_item">Edit Item</string>
     <string name="delete_list">Delete List</string>
     <string name="item_name">Item</string>
     <string name="item_quantity">Quantity</string>
