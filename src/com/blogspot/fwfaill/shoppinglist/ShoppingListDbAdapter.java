@@ -26,38 +26,66 @@ public class ShoppingListDbAdapter {
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
 	
-	/**
-	 * Database creation sql statements
-	 */
-	private static final String DATABASE_CREATE = 
-			"create table shoppinglist (_id integer primary key autoincrement, title text not null);" +
-			"create table shoppinglistitem (_id integer primary key autoincrement, item_title text not null," +
-			"quantity text, picked_up integer not null, list_id integer not null);";
 	private static final String DATABASE_NAME = "shoppinglistdb";
 	private static final String DATABASE_TABLE_LIST = "shoppinglist";
 	private static final String DATABASE_TABLE_ITEM = "shoppinglistitem";
-	private static final int DATABASE_VERSION = 2;
+	private static final int DATABASE_VERSION = 3;
 	
 	private final Context mContext;
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
+		private Context context;
 
 		public DatabaseHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
+			this.context = context;
 		}
 		
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			db.execSQL(DATABASE_CREATE);
+			// db.execSQL(DATABASE_CREATE);
+			String[] sql = context.getString(R.string.shoppinglistdb_onCreate).split("\n");
+	        db.beginTransaction();
+	        try {
+	            // Create tables & test data
+	            execMultipleSQL(db, sql);
+	            db.setTransactionSuccessful();
+	        } catch (SQLException e) {
+	            Log.e("Error creating tables and debug data", e.toString());
+	        } finally {
+	            db.endTransaction();
+	        }
 		}
 		
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			Log.w(TAG, "Upgrading to database from version " + oldVersion + " to "
 					+ newVersion + ", which will destroy all old data");
-			db.execSQL("drop table if exists shoppinglist;" +
-					"drop table if exists shoppinglistitem;");
+			String[] sql = context.getString(
+	                R.string.shoppinglistdb_onUpgrade).split("\n");
+	        db.beginTransaction();
+	        try {
+	            // drop tables & test data
+	            execMultipleSQL(db, sql);
+	            db.setTransactionSuccessful();
+	        } catch (SQLException e) {
+	            Log.e("Error creating tables and debug data", e.toString());
+	        } finally {
+	            db.endTransaction();
+	        }
 			onCreate(db);
+		}
+		
+		/**
+		 * Execute all the SQL statements in the String[] array
+		 * @param db The database on which to execute the statements
+		 * @param sql An array of SQL statements to execute
+		 */
+		private void execMultipleSQL(SQLiteDatabase db, String[] sql) {
+			for (String s : sql) {
+				if (s.trim().length() > 0)
+					db.execSQL(s);
+			}
 		}
 	}
 	

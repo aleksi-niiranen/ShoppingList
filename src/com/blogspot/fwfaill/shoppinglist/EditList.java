@@ -62,6 +62,8 @@ public class EditList extends Activity {
 			
 			@Override
 			public void onClick(View v) {
+				// call saveState() to make sure the list exists in the database
+				saveState();
 				addItemToList();
 				
 			}

@@ -29,12 +29,17 @@ public class EditItem extends Activity {
 		mNameText = (EditText) findViewById(R.id.item_title);
 		mQuantityText = (EditText) findViewById(R.id.item_quantity);
 		
-		mListRowId = getIntent().getLongExtra("listId", 0);
+		Bundle extras = getIntent().getExtras();
+		mListRowId = extras.getLong("listId");
+		
 		mRowId = (savedInstanceState == null) ? null :
 			(Long) savedInstanceState.getSerializable(ShoppingListDbAdapter.KEY_ROWID);
 		if (mRowId == null) {
-			Bundle extras = getIntent().getExtras();
 			mRowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : null;
+			/* if extras does not contain KEY_ROWID value 0 will be assigned to mRowId
+			 * this will cause CursorIndexOutOfBoundsException
+			 */
+			if (mRowId == 0) mRowId = null;
 		}
 		
 		populateFields();
@@ -53,12 +58,12 @@ public class EditItem extends Activity {
 
 	private void populateFields() {
 		if (mRowId != null) {
-			Cursor shoppingList = mDbHelper.fetchShoppingList(mRowId);
-			startManagingCursor(shoppingList);
-			mNameText.setText(shoppingList.getString(
-					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_ITEM_TITLE)));
-			mQuantityText.setText(shoppingList.getString(
-					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_QUANTITY)));
+			Cursor shoppingListItem = mDbHelper.fetchShoppingListItem(mRowId);
+			startManagingCursor(shoppingListItem);
+			mNameText.setText(shoppingListItem.getString(
+					shoppingListItem.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_ITEM_TITLE)));
+			mQuantityText.setText(shoppingListItem.getString(
+					shoppingListItem.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_QUANTITY)));
 		}
 	}
 	
