@@ -105,4 +105,6 @@ public class EditItem extends Activity {
     	super.onDestroy();
     	mDbHelper.close();
     }
+    
+    // TODO: override backbutton press to setResult(OK) and ignore empty fields
 }

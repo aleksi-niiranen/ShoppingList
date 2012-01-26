@@ -29,7 +29,7 @@ public class ShoppingListDbAdapter {
 	private static final String DATABASE_NAME = "shoppinglistdb";
 	private static final String DATABASE_TABLE_LIST = "shoppinglist";
 	private static final String DATABASE_TABLE_ITEM = "shoppinglistitem";
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 4;
 	
 	private final Context mContext;
 	
@@ -43,7 +43,6 @@ public class ShoppingListDbAdapter {
 		
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			// db.execSQL(DATABASE_CREATE);
 			String[] sql = context.getString(R.string.shoppinglistdb_onCreate).split("\n");
 	        db.beginTransaction();
 	        try {
@@ -179,7 +178,7 @@ public class ShoppingListDbAdapter {
 	 * @param listId
 	 * @return Cursor over all shopping list items on a certain list
 	 */
-	public Cursor fetchItemsOnList(int listId) {
+	public Cursor fetchItemsOnList(long listId) {
 		return mDb.query(DATABASE_TABLE_ITEM, new String[] {KEY_ROWID, KEY_ITEM_TITLE, KEY_QUANTITY, KEY_PICKED_UP, KEY_LIST_ID}, 
 				KEY_LIST_ID + "=" + listId, null, null, null, null);
 	}
