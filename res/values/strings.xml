@@ -3,7 +3,6 @@
 
     <string name="app_name">ShoppingList</string>
     <string name="no_lists">No Shopping Lists</string>
-    <string name="no_items">No Items On List</string>
     <string name="save">Save</string>
     <string name="list_title">List Title</string>
     <string name="list_menu_add_list">Add List</string>
