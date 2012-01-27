@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,12 +35,6 @@ public class EditList extends ListActivity {
 		
 		setContentView(R.layout.editlist);
 		setTitle(R.string.edit_list);
-		
-		LayoutInflater inflater = getLayoutInflater();
-		// inflate View from separate XML layout
-		View footer = inflater.inflate(R.layout.itemlistfooter, null);
-		// set footer to list
-		getListView().addFooterView(footer);
 		
 		mListTitleText = (EditText) findViewById(R.id.txtShopName);
 		
