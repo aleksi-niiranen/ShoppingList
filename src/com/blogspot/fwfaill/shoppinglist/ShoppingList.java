@@ -20,26 +20,30 @@ public class ShoppingList extends ListActivity {
 
 	// for menus
 	private static final int INSERT_ID = R.id.item1;
+	private static final int MAP_ID = R.id.item2;
 	private static final int DELETE_ID = Menu.FIRST + 1;
 
 	private ShoppingListDbAdapter mDbHelper;
 
 	/** Called when the activity is first created. */
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+		setContentView(R.layout.listmain);
 		mDbHelper = new ShoppingListDbAdapter(this);
 		mDbHelper.open();
 		fillData();
 		registerForContextMenu(getListView());
 	}
 
+	/**
+	 * Fills the list with data from the database
+	 */
 	private void fillData() {
 		Cursor shoppingListsCursor = mDbHelper.fetchAllShoppingLists();
 		startManagingCursor(shoppingListsCursor);
 
-		// Create an array to specify the fields we want to display in the list
+		// Create an array to specify the columns we want to display in the list
 		String[] from = new String[] { ShoppingListDbAdapter.KEY_TITLE };
 
 		// and an array of the fields we want to bind those fields to
@@ -62,16 +66,25 @@ public class ShoppingList extends ListActivity {
 		return true;
 	}
 
+	/**
+	 * @see android.app.Activity#onOptionsItemSelected(android.view.MenuItem)
+	 */
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case INSERT_ID:
 			createList();
 			return true;
+		case MAP_ID:
+			Intent i = new Intent(this, ShoppingListMap.class);
+			startActivity(i);
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+	/**
+	 * @see android.app.Activity#onCreateContextMenu(android.view.ContextMenu, android.view.View, android.view.ContextMenu.ContextMenuInfo)
+	 */
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
@@ -79,11 +92,17 @@ public class ShoppingList extends ListActivity {
 		menu.add(0, DELETE_ID, 0, R.string.remove);
 	}
 
+	/**
+	 * Starts activity for creating a new shopping list
+	 */
 	private void createList() {
 		Intent i = new Intent(this, EditList.class);
 		startActivityForResult(i, ACTIVITY_CREATE);
 	}
 
+	/**
+	 * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
+	 */
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		switch (item.getItemId()) {

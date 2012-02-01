@@ -15,12 +15,45 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/titlelabel"
         android:inputType="text" />
+    
+    <TextView
+        android:id="@+id/locationlabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/location"
+        android:layout_below="@id/txtShopName" />
+
+    
+    
+    <LinearLayout
+        android:id="@+id/locationBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/locationlabel"
+        android:orientation="horizontal">
+        
+        <EditText 
+        android:id="@+id/txtLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:inputType="text"/>
+        
+        <ImageButton
+        android:id="@+id/btnLocate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_action_locate"
+        android:layout_weight="1" />
+        
+    </LinearLayout>
+    
 
     <Button
         android:id="@+id/btnSaveList"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/txtShopName"
+        android:layout_below="@id/locationBar"
         android:text="@string/save" />
 
     <Button

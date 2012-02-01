@@ -3,6 +3,7 @@ package com.blogspot.fwfaill.shoppinglist;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -11,11 +12,15 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class EditList extends ListActivity {
+	
+	// TODO: override backbutton press to setResult(OK) and ignore empty field
+	// TODO: use GeoCoder to get latitude and longitude from location
 	
 	private static final int ACTIVITY_CREATE = 0;
 	private static final int ACTIVITY_EDIT = 1;
@@ -24,8 +29,10 @@ public class EditList extends ListActivity {
 	private static final int DELETE_ID = Menu.FIRST;
 	
 	private EditText mListTitleText;
+	private EditText mLocationText;
 	private Long mRowId;
 	private ShoppingListDbAdapter mDbHelper;
+	private Geocoder mGeocoder;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +44,8 @@ public class EditList extends ListActivity {
 		setTitle(R.string.edit_list);
 		
 		mListTitleText = (EditText) findViewById(R.id.txtShopName);
+		mLocationText = (EditText) findViewById(R.id.txtLocation);
+		mGeocoder = new Geocoder(this);
 		
 		mRowId = (savedInstanceState == null) ? null :
 			(Long) savedInstanceState.getSerializable(ShoppingListDbAdapter.KEY_ROWID);
@@ -50,6 +59,7 @@ public class EditList extends ListActivity {
 		
 		Button saveList = (Button) findViewById(R.id.btnSaveList);
 		Button addItem = (Button) findViewById(R.id.btnAddItem);
+		ImageButton locate = (ImageButton) findViewById(R.id.btnLocate);
 		
 		saveList.setOnClickListener(new View.OnClickListener() {
 			
@@ -69,6 +79,14 @@ public class EditList extends ListActivity {
 				addItemToList();
 			}
 		});
+		
+		locate.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO show map
+			}
+		});
 	}
 	
 	private void addItemToList() {
@@ -83,10 +101,12 @@ public class EditList extends ListActivity {
 			startManagingCursor(shoppingList);
 			mListTitleText.setText(shoppingList.getString(
 					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)));
+			mLocationText.setText(shoppingList.getString(
+					shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LOCATION)));
 			// fetch list items
 			Cursor listItemsCursor = mDbHelper.fetchItemsOnList(mRowId);
 			startManagingCursor(listItemsCursor);
-			// Create an array to specify the fields we want to display in the list
+			// Create an array to specify the columns we want to display in the list
 			String[] from = new String[] {ShoppingListDbAdapter.KEY_ITEM_TITLE, ShoppingListDbAdapter.KEY_QUANTITY};
 			
 			// and an array of the fields we want to bind those fields to
@@ -120,14 +140,15 @@ public class EditList extends ListActivity {
     
     private void saveState() {
 		String listTitle = mListTitleText.getText().toString();
+		String location = mLocationText.getText().toString();
 		
 		if (mRowId == null) {
-			long id = mDbHelper.createShoppingList(listTitle);
+			long id = mDbHelper.createShoppingList(listTitle, location);
 			if (id > 0) {
 				mRowId = id;
 			}
 		} else {
-			mDbHelper.updateShoppingList(mRowId, listTitle);
+			mDbHelper.updateShoppingList(mRowId, listTitle, location);
 		}
 	}
     
@@ -169,6 +190,4 @@ public class EditList extends ListActivity {
     	super.onDestroy();
     	mDbHelper.close();
     }
-    
-    // TODO: override backbutton press to setResult(OK) and ignore empty field
 }
