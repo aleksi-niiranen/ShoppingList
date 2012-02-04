@@ -265,23 +265,23 @@ public class ShoppingListDbAdapter {
 	 * @param rowId id of the shopping list item to update
 	 * @param itemTitle value to set item title to
 	 * @param quantity value to set quantity to
-	 * @param pickedUp value to set picked up to
 	 * @return true if the shopping list item was successfully updated, false otherwise
 	 */
-	public boolean updateShoppingListItem(long rowId, String itemTitle, String quantity, int pickedUp) {
+	public boolean updateShoppingListItem(long rowId, String itemTitle, String quantity) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_ITEM_TITLE, itemTitle);
 		args.put(KEY_QUANTITY, quantity);
-		args.put(KEY_PICKED_UP, pickedUp);
 		
 		return mDb.update(DATABASE_TABLE_ITEM, args, KEY_ROWID + "=" + rowId, null) > 0;
 	}
 	
 	/**
-	 * TODO: comment updateShoppingListItem
-	 * @param rowId
-	 * @param pickedUp
-	 * @return
+	 * Update the shopping list item using the details provided. The shopping list item
+	 * to be updated is specified using the rowId, and it is altered to use the item title,
+	 * quantity and picked up values passed in
+	 * @param rowId id of the shopping list item to update
+	 * @param pickedUp value toset picked up to
+	 * @return true if the shopping list item was successfully updated, false otherwise
 	 */
 	public boolean updateShoppingListItem(long rowId, int pickedUp) {
 		ContentValues args = new ContentValues();

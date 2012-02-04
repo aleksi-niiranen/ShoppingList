@@ -30,8 +30,6 @@ import android.widget.TextView;
 
 public class EditList extends ListActivity {
 
-	// TODO: override backbutton press to setResult(OK) and ignore empty field
-
 	private static final int ACTIVITY_CREATE = 0;
 	private static final int ACTIVITY_EDIT = 1;
 
@@ -169,9 +167,9 @@ public class EditList extends ListActivity {
 
 		if (listTitle.isEmpty()) listTitle = "default";
 		
-		/* this is really slow. move to another thread or remove?
+		/* TODO: this is really slow. move to another thread or remove?
 		 * fetchin coordinates from db faster than geocoding each time
-		 * when map is displayed?
+		 * when map is displayed? */
 		try {
 			// get coordinates
 			List<Address> address = mGeocoder.getFromLocationName(location, 1);
@@ -191,7 +189,7 @@ public class EditList extends ListActivity {
 			Log.e("EditList", "no coordinates assigned to address");
 			mLatitude = null;
 			mLongitude = null;
-		} */
+		}
 
 		if (mRowId == null) {
 			long id = mDbHelper.createShoppingList(listTitle, location, mLatitude, mLongitude);

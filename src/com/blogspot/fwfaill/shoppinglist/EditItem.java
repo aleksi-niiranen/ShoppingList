@@ -96,7 +96,7 @@ public class EditItem extends Activity {
 				mRowId = id;
 			}
 		} else {
-			mDbHelper.updateShoppingListItem(mRowId, itemName, itemQuantity, 0);
+			mDbHelper.updateShoppingListItem(mRowId, itemName, itemQuantity);
 		}
 	}
     
@@ -105,6 +105,4 @@ public class EditItem extends Activity {
     	super.onDestroy();
     	mDbHelper.close();
     }
-    
-    // TODO: override backbutton press to setResult(OK) and ignore empty fields
 }

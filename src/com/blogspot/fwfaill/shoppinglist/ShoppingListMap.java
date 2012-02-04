@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -21,10 +22,10 @@ import com.google.android.maps.OverlayItem;
 
 public class ShoppingListMap extends MapActivity {
 
-	private MapView mapView;
-	private List<Overlay> mapOverlays;
-	private Drawable drawable;
-	private ShoppingListItemizedOverlay itemizedOverlay;
+	private MapView mMapView;
+	private List<Overlay> mMapOverlays;
+	private Drawable mDrawable;
+	private ShoppingListItemizedOverlay mItemizedOverlay;
 	private ShoppingListDbAdapter mDbHelper;
 	private Geocoder mGeocoder;
 
@@ -36,12 +37,12 @@ public class ShoppingListMap extends MapActivity {
 		mDbHelper = new ShoppingListDbAdapter(this);
 		mDbHelper.open();
 		setContentView(R.layout.mapmain);
-		mapView = (MapView) findViewById(R.id.mapview);
-		mapView.setBuiltInZoomControls(true);
+		mMapView = (MapView) findViewById(R.id.mapview);
+		mMapView.setBuiltInZoomControls(true);
 
-		mapOverlays = mapView.getOverlays();
-		drawable = this.getResources().getDrawable(R.drawable.androidmarker);
-		itemizedOverlay = new ShoppingListItemizedOverlay(drawable);
+		mMapOverlays = mMapView.getOverlays();
+		mDrawable = this.getResources().getDrawable(R.drawable.androidmarker);
+		mItemizedOverlay = new ShoppingListItemizedOverlay(mDrawable);
 		mGeocoder = new Geocoder(this);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
@@ -50,53 +51,16 @@ public class ShoppingListMap extends MapActivity {
 		}
 	}
 
-	// TODO: move to another thread
 	private void fillMap() {
 		Cursor cursor = mDbHelper.fetchAllShoppingLists();
-		startManagingCursor(cursor);
-
-		if (cursor.moveToFirst()) {
-			do {
-				if (cursor.isNull(cursor.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT)) ||
-						cursor.isNull(cursor.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LON))) {
-					// coordinates not found in database, geocode from location name
-					try {
-						String location = cursor.getString(cursor.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LOCATION));
-						List<Address> address = mGeocoder.getFromLocationName(location, 1);
-						if (!address.isEmpty()) {
-							int lat = (int) (address.get(0).getLatitude() * 1e6);
-							int lon = (int) (address.get(0).getLongitude() * 1e6);
-							GeoPoint point = new GeoPoint(lat, lon);
-							OverlayItem overlayItem = new OverlayItem(point, "", "");
-							itemizedOverlay.addOverlay(overlayItem);
-						}
-					} catch (IOException e) {
-						Log.e("ShoppingListMap", "service unavailable");
-					} catch (IllegalArgumentException e) {
-						Log.e("ShoppingListMap", "location is null");
-					} catch (IllegalStateException e) {
-						Log.e("EditList", "no coordinates assigned to address");
-					}
-				} else {
-					// coordinates found from database
-					int lat = cursor.getInt(cursor.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT));
-					int lon = cursor.getInt(cursor.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LON));
-					GeoPoint point = new GeoPoint(lat, lon);
-					OverlayItem overlayItem = new OverlayItem(point, "", "");
-					itemizedOverlay.addOverlay(overlayItem);
-				}
-
-			} while (cursor.moveToNext());
-			if (itemizedOverlay.size() > 0) mapOverlays.add(itemizedOverlay);
-		}
-		mDbHelper.close();
+		new FillMapTask().execute(cursor);
 	}
 
 	private void addMarker(int lat, int lon) {
 		GeoPoint point = new GeoPoint(lat, lon);
 		OverlayItem overlayItem = new OverlayItem(point, "", "");
-		itemizedOverlay.addOverlay(overlayItem);
-		mapOverlays.add(itemizedOverlay);
+		mItemizedOverlay.addOverlay(overlayItem);
+		mMapOverlays.add(mItemizedOverlay);
 	}
 
 	@Override
@@ -120,5 +84,51 @@ public class ShoppingListMap extends MapActivity {
 	@Override
 	protected boolean isRouteDisplayed() {
 		return false;
+	}
+	
+	private class FillMapTask extends AsyncTask<Cursor, Void, Void> {
+
+		// runs on a background thread
+		@Override
+		protected Void doInBackground(Cursor... params) {
+			startManagingCursor(params[0]);
+
+			if (params[0].moveToFirst()) {
+				do {
+					if (params[0].isNull(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT)) ||
+							params[0].isNull(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LON))) {
+						// coordinates not found in database, geocode from location name
+						try {
+							String location = params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LOCATION));
+							List<Address> address = mGeocoder.getFromLocationName(location, 1);
+							if (!address.isEmpty()) {
+								int lat = (int) (address.get(0).getLatitude() * 1e6);
+								int lon = (int) (address.get(0).getLongitude() * 1e6);
+								GeoPoint point = new GeoPoint(lat, lon);
+								OverlayItem overlayItem = new OverlayItem(point, "", "");
+								mItemizedOverlay.addOverlay(overlayItem);
+							}
+						} catch (IOException e) {
+							Log.e("ShoppingListMap", "service unavailable");
+						} catch (IllegalArgumentException e) {
+							Log.e("ShoppingListMap", "location is null");
+						} catch (IllegalStateException e) {
+							Log.e("EditList", "no coordinates assigned to address");
+						}
+					} else {
+						// coordinates found from database
+						int lat = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT));
+						int lon = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LON));
+						GeoPoint point = new GeoPoint(lat, lon);
+						OverlayItem overlayItem = new OverlayItem(point, "", "");
+						mItemizedOverlay.addOverlay(overlayItem);
+					}
+
+				} while (params[0].moveToNext());
+				if (mItemizedOverlay.size() > 0) mMapOverlays.add(mItemizedOverlay);
+			}
+			mDbHelper.close();
+			return null;
+		}
 	}
 }
