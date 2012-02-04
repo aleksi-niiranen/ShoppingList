@@ -21,6 +21,8 @@ public class ShoppingListDbAdapter {
 	public static final String KEY_ITEM_TITLE = "item_title";
 	public static final String KEY_QUANTITY = "quantity";
 	public static final String KEY_PICKED_UP = "picked_up";
+	public static final String KEY_LAT = "latitude";
+	public static final String KEY_LON = "longitude";
 	public static final String KEY_LIST_ID = "list_id";
 	
 	private static final String TAG = "ShoppingListDbAdapter";
@@ -30,7 +32,7 @@ public class ShoppingListDbAdapter {
 	private static final String DATABASE_NAME = "shoppinglistdb";
 	private static final String DATABASE_TABLE_LIST = "shoppinglist";
 	private static final String DATABASE_TABLE_ITEM = "shoppinglistitem";
-	private static final int DATABASE_VERSION = 6;
+	private static final int DATABASE_VERSION = 7;
 	
 	private final Context mContext;
 	
@@ -121,27 +123,23 @@ public class ShoppingListDbAdapter {
 	 * successfully created return the new rowId for that shopping list, otherwise return
 	 * a -1 to indicate failure
 	 * @param title the list title
+	 * @param location the location of list target (e.g. "Turuntie 1, Salo")
+	 * @param lat the latitude of address got from location
+	 * @param lon the longitude of address got from location
 	 * @return rowId or -1 if failed
 	 */
-	public long createShoppingList(String title) {
-		ContentValues initialValues = new ContentValues();
-		initialValues.put(KEY_TITLE, title);
-		
-		return mDb.insert(DATABASE_TABLE_LIST, null, initialValues);
-	}
-	
-	/**
-	 * TODO: comment createShoppingList
-	 * @param title
-	 * @param location
-	 * @param lat
-	 * @param lon
-	 * @return
-	 */
-	public long createShoppingList(String title, String location) {
+	public long createShoppingList(String title, String location, Integer lat, Integer lon) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_TITLE, title);
 		initialValues.put(KEY_LOCATION, location);
+		if (lat == null || lon == null) {
+			initialValues.putNull(KEY_LAT);
+			initialValues.putNull(KEY_LON);
+		}
+		else {
+			initialValues.put(KEY_LAT, lat);
+			initialValues.put(KEY_LON, lon);
+		}
 		
 		return mDb.insert(DATABASE_TABLE_LIST, null, initialValues);
 	}
@@ -187,7 +185,8 @@ public class ShoppingListDbAdapter {
 	 * @return Cursor over all shopping lists
 	 */
 	public Cursor fetchAllShoppingLists() {
-		return mDb.query(DATABASE_TABLE_LIST, new String[] {KEY_ROWID, KEY_TITLE, KEY_LOCATION}, null, null, null, null, null);
+		return mDb.query(DATABASE_TABLE_LIST, new String[] {
+				KEY_ROWID, KEY_TITLE, KEY_LOCATION, KEY_LAT, KEY_LON}, null, null, null, null, null);
 	}
 	
 	/**
@@ -196,7 +195,8 @@ public class ShoppingListDbAdapter {
 	 * @return Cursor over all shopping list items on a certain list
 	 */
 	public Cursor fetchItemsOnList(long listId) {
-		return mDb.query(DATABASE_TABLE_ITEM, new String[] {KEY_ROWID, KEY_ITEM_TITLE, KEY_QUANTITY, KEY_PICKED_UP, KEY_LIST_ID}, 
+		return mDb.query(DATABASE_TABLE_ITEM, new String[] {
+				KEY_ROWID, KEY_ITEM_TITLE, KEY_QUANTITY, KEY_PICKED_UP, KEY_LIST_ID}, 
 				KEY_LIST_ID + "=" + listId, null, null, null, null);
 	}
 	
@@ -208,7 +208,8 @@ public class ShoppingListDbAdapter {
 	 */
 	public Cursor fetchShoppingList(long rowId) throws SQLException {
 		Cursor cursor = mDb.query(true, DATABASE_TABLE_LIST, 
-				new String[] {KEY_ROWID, KEY_TITLE, KEY_LOCATION}, KEY_ROWID + "=" + rowId, null, null, null, null, null);
+				new String[] {KEY_ROWID, KEY_TITLE, KEY_LOCATION, KEY_LAT, KEY_LON}, 
+				KEY_ROWID + "=" + rowId, null, null, null, null, null);
 		if (cursor != null) {
 			cursor.moveToFirst();
 		}
@@ -236,28 +237,23 @@ public class ShoppingListDbAdapter {
 	 * value passed in
 	 * @param rowId id of the shopping list to update
 	 * @param title value to set title to
+	 * @param location the location name of the list target
+	 * @param lat latitude of address got from location name
+	 * @param lon longitude of address got from location name
 	 * @return true if the shopping list was successfully updated, false otherwise
 	 */
-	public boolean updateShoppingList(long rowId, String title) {
-		ContentValues args = new ContentValues();
-		args.put(KEY_TITLE, title);
-		
-		return mDb.update(DATABASE_TABLE_LIST, args, KEY_ROWID + "=" + rowId, null) > 0;
-	}
-	
-	/**
-	 * TODO: comment updateShoppingList
-	 * @param rowId
-	 * @param title
-	 * @param location
-	 * @param lat
-	 * @param lon
-	 * @return
-	 */
-	public boolean updateShoppingList(long rowId, String title, String location) {
+	public boolean updateShoppingList(long rowId, String title, String location, Integer lat, Integer lon) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_TITLE, title);
 		args.put(KEY_LOCATION, location);
+		if (lat == null || lon == null) {
+			args.putNull(KEY_LAT);
+			args.putNull(KEY_LON);
+		}
+		else {
+			args.put(KEY_LAT, lat);
+			args.put(KEY_LON, lon);
+		}
 		
 		return mDb.update(DATABASE_TABLE_LIST, args, KEY_ROWID + "=" + rowId, null) > 0;
 	}
@@ -276,6 +272,19 @@ public class ShoppingListDbAdapter {
 		ContentValues args = new ContentValues();
 		args.put(KEY_ITEM_TITLE, itemTitle);
 		args.put(KEY_QUANTITY, quantity);
+		args.put(KEY_PICKED_UP, pickedUp);
+		
+		return mDb.update(DATABASE_TABLE_ITEM, args, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+	
+	/**
+	 * TODO: comment updateShoppingListItem
+	 * @param rowId
+	 * @param pickedUp
+	 * @return
+	 */
+	public boolean updateShoppingListItem(long rowId, int pickedUp) {
+		ContentValues args = new ContentValues();
 		args.put(KEY_PICKED_UP, pickedUp);
 		
 		return mDb.update(DATABASE_TABLE_ITEM, args, KEY_ROWID + "=" + rowId, null) > 0;
