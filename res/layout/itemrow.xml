@@ -4,26 +4,18 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal" >
 
-    <CheckBox
-        android:id="@+id/pickedup"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:focusable="false" />
-
-    <TextView
+    <CheckedTextView
         android:id="@+id/itemtext1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="18.0sp"
-        android:textStyle="bold"
-        android:layout_toRightOf="@id/pickedup" />
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/itemtext2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/itemtext1"
-        android:layout_toRightOf="@id/pickedup"
         android:layout_marginLeft="10dip"
         android:textSize="15.0sp" />
 

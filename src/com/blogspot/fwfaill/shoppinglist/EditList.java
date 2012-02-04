@@ -7,21 +7,22 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Paint;
 import android.location.Address;
 import android.location.Geocoder;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
-import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
+import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -33,8 +34,9 @@ public class EditList extends ListActivity {
 	private static final int ACTIVITY_CREATE = 0;
 	private static final int ACTIVITY_EDIT = 1;
 
-	// for menus
-	private static final int DELETE_ID = Menu.FIRST;
+	// for context menu
+	private static final int EDIT_ID = R.id.edititem;
+	private static final int DELETE_ID = R.id.deleteitem;
 
 	private EditText mListTitleText;
 	private EditText mLocationText;
@@ -164,33 +166,12 @@ public class EditList extends ListActivity {
 	private void saveState() {
 		String listTitle = mListTitleText.getText().toString();
 		String location = mLocationText.getText().toString();
-
 		if (listTitle.isEmpty()) listTitle = "default";
 		
-		/* TODO: this is really slow. move to another thread or remove?
-		 * fetchin coordinates from db faster than geocoding each time
-		 * when map is displayed? */
-		try {
-			// get coordinates
-			List<Address> address = mGeocoder.getFromLocationName(location, 1);
-			if (!address.isEmpty()) {
-				mLatitude = (int) (address.get(0).getLatitude() * 1e6);
-				mLongitude = (int) (address.get(0).getLongitude() * 1e6);
-			}
-		} catch (IOException e) {
-			Log.e("EditList", "service unavailable");
-			mLatitude = null;
-			mLongitude = null;
-		} catch (IllegalArgumentException e) {
-			Log.e("EditList", "location is null");
-			mLatitude = null;
-			mLongitude = null;
-		} catch (IllegalStateException e) {
-			Log.e("EditList", "no coordinates assigned to address");
-			mLatitude = null;
-			mLongitude = null;
-		}
-
+		// do geocoding in background thread
+		// TODO: is this OK?
+		new LocateTask().execute(location);
+		
 		if (mRowId == null) {
 			long id = mDbHelper.createShoppingList(listTitle, location, mLatitude, mLongitude);
 			if (id > 0) {
@@ -204,14 +185,23 @@ public class EditList extends ListActivity {
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
-		menu.add(0, DELETE_ID, 0, R.string.remove);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.contextmenu, menu);
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		switch (item.getItemId()) {
+		case EDIT_ID:
+			info = (AdapterContextMenuInfo) item.getMenuInfo();
+			Intent i = new Intent(this, EditItem.class);
+			i.putExtra(ShoppingListDbAdapter.KEY_ROWID, info.id);
+			i.putExtra("listId", mRowId);
+			startActivityForResult(i, ACTIVITY_EDIT);
+			return true;
 		case DELETE_ID:
-			AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+			info = (AdapterContextMenuInfo) item.getMenuInfo();
 			mDbHelper.deleteShoppingListItem(info.id);
 			populateFields();
 			return true;
@@ -222,12 +212,17 @@ public class EditList extends ListActivity {
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
-		CheckBox cb = (CheckBox) v.findViewById(R.id.pickedup);
-		Intent i = new Intent(this, EditItem.class);
-		i.putExtra(ShoppingListDbAdapter.KEY_ROWID, id);
-		i.putExtra("listId", mRowId);
-		i.putExtra("pup", (cb.isChecked() ? 1 : 0));
-		startActivityForResult(i, ACTIVITY_EDIT);
+		CheckedTextView nameText = (CheckedTextView) v.findViewById(R.id.itemtext1);
+		TextView quantityText = (TextView) v.findViewById(R.id.itemtext2);
+		nameText.setChecked(!nameText.isChecked());
+		mDbHelper.updateShoppingListItem(id, nameText.isChecked() ? 1 : 0);
+		if (nameText.isChecked()) {
+			nameText.setPaintFlags(nameText.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+			quantityText.setPaintFlags(quantityText.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+		} else {
+			nameText.setPaintFlags(nameText.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
+			quantityText.setPaintFlags(quantityText.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
+		}
 	}
 
 	@Override
@@ -257,37 +252,52 @@ public class EditList extends ListActivity {
 		}
 
 		@Override
-		public void bindView(View view, Context context, final Cursor cursor) {
-			CheckBox pickedUp = (CheckBox) view.findViewById(R.id.pickedup);
-			TextView nameText = (TextView) view.findViewById(R.id.itemtext1);
+		public void bindView(View view, Context context, Cursor cursor) {
+			CheckedTextView nameText = (CheckedTextView) view.findViewById(R.id.itemtext1);
 			TextView quantityText = (TextView) view.findViewById(R.id.itemtext2);
 
-			pickedUp.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(
+			nameText.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(
 					ShoppingListDbAdapter.KEY_PICKED_UP)) == 1 ? true : false);
 
-			if (pickedUp.isChecked()) {
-				nameText.setEnabled(false);
-				quantityText.setEnabled(false);
+			if (nameText.isChecked()) {
+				nameText.setPaintFlags(nameText.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+				quantityText.setPaintFlags(quantityText.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
 			}
-
-			pickedUp.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
-				@Override
-				public void onCheckedChanged(CompoundButton buttonView,
-						boolean isChecked) {
-					// update database
-					mDbHelper.updateShoppingListItem(cursor.getLong(cursor.getColumnIndexOrThrow(
-							ShoppingListDbAdapter.KEY_ROWID)), isChecked ? 1 : 0);
-					// disable/enable textviews
-					// nameText.setEnabled(!isChecked);
-					// quantityText.setEnabled(!isChecked);
-				}
-			});
 
 			nameText.setText(cursor.getString(cursor.getColumnIndexOrThrow(
 					ShoppingListDbAdapter.KEY_ITEM_TITLE)));
 			quantityText.setText(cursor.getString(cursor.getColumnIndexOrThrow(
 					ShoppingListDbAdapter.KEY_QUANTITY)));
+		}
+	}
+	
+	private class LocateTask extends AsyncTask<String, Void, Void> {
+
+		@Override
+		protected Void doInBackground(String... params) {
+			/* Is fetching coordinates from database faster than geocoding each time
+			 * when map is displayed? */
+			try {
+				// get coordinates
+				List<Address> address = mGeocoder.getFromLocationName(params[0], 1);
+				if (!address.isEmpty()) {
+					mLatitude = (int) (address.get(0).getLatitude() * 1e6);
+					mLongitude = (int) (address.get(0).getLongitude() * 1e6);
+				}
+			} catch (IOException e) {
+				Log.e("EditList", "service unavailable");
+				mLatitude = null;
+				mLongitude = null;
+			} catch (IllegalArgumentException e) {
+				Log.e("EditList", "location is null");
+				mLatitude = null;
+				mLongitude = null;
+			} catch (IllegalStateException e) {
+				Log.e("EditList", "no coordinates assigned to address");
+				mLatitude = null;
+				mLongitude = null;
+			}
+			return null;
 		}
 	}
 }
