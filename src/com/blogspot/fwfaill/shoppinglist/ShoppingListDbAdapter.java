@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012 Aleksi Niiranen
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.blogspot.fwfaill.shoppinglist;
 
 import android.content.ContentValues;
@@ -10,7 +26,7 @@ import android.util.Log;
 
 /**
  * 
- * @author Aleksi
+ * @author Aleksi Niiranen
  *
  */
 public class ShoppingListDbAdapter {
@@ -124,22 +140,12 @@ public class ShoppingListDbAdapter {
 	 * a -1 to indicate failure
 	 * @param title the list title
 	 * @param location the location of list target (e.g. "Turuntie 1, Salo")
-	 * @param lat the latitude of address got from location
-	 * @param lon the longitude of address got from location
 	 * @return rowId or -1 if failed
 	 */
-	public long createShoppingList(String title, String location, Integer lat, Integer lon) {
+	public long createShoppingList(String title, String location) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_TITLE, title);
 		initialValues.put(KEY_LOCATION, location);
-		if (lat == null || lon == null) {
-			initialValues.putNull(KEY_LAT);
-			initialValues.putNull(KEY_LON);
-		}
-		else {
-			initialValues.put(KEY_LAT, lat);
-			initialValues.put(KEY_LON, lon);
-		}
 		
 		return mDb.insert(DATABASE_TABLE_LIST, null, initialValues);
 	}
@@ -233,8 +239,46 @@ public class ShoppingListDbAdapter {
 	
 	/**
 	 * Update the shopping list using the details provided. The shopping list to
-	 * be updated is specified using the rowId, and it is altered to use the title
-	 * value passed in
+	 * be updated is specified using the rowId, and it is altered to use the title 
+	 * and location values passed in
+	 * @param rowId id of the shopping list to update
+	 * @param title value to set title to
+	 * @param location the location name of the list target
+	 * @return true if the shopping list was successfully updated, false otherwise
+	 */
+	public boolean updateShoppingList(long rowId, String title, String location) {
+		ContentValues args = new ContentValues();
+		args.put(KEY_TITLE, title);
+		args.put(KEY_LOCATION, location);
+		
+		return mDb.update(DATABASE_TABLE_LIST, args, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+	
+	/**
+	 * Update the coordinates of a shopping list.
+	 * @param rowId id of the shopping list to update
+	 * @param lat latitude of address got from location name
+	 * @param lon longitude of address got from location name
+	 * @return true if the shopping list was successfully updated, false otherwise
+	 */
+	public boolean updateShoppingList(long rowId, Integer lat, Integer lon) {
+		ContentValues args = new ContentValues();
+		if (lat == null || lon == null) {
+			args.putNull(KEY_LAT);
+			args.putNull(KEY_LON);
+		}
+		else {
+			args.put(KEY_LAT, lat);
+			args.put(KEY_LON, lon);
+		}
+		return mDb.update(DATABASE_TABLE_LIST, args, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+	
+	/**
+	 * Update the shopping list using the details provided. The shopping list to
+	 * be updated is specified using the rowId, and it is altered to use the title, 
+	 * location, lat and lon values passed in. This method should not be used other than
+	 * passing null values to latitude and longitude columns
 	 * @param rowId id of the shopping list to update
 	 * @param title value to set title to
 	 * @param location the location name of the list target
@@ -254,7 +298,6 @@ public class ShoppingListDbAdapter {
 			args.put(KEY_LAT, lat);
 			args.put(KEY_LON, lon);
 		}
-		
 		return mDb.update(DATABASE_TABLE_LIST, args, KEY_ROWID + "=" + rowId, null) > 0;
 	}
 	
