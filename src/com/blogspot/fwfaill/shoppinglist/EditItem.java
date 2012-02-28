@@ -110,6 +110,7 @@ public class EditItem extends Activity {
     private void saveState() {
 		String itemName = mNameText.getText().toString();
 		String itemQuantity = mQuantityText.getText().toString();
+		if (itemName.isEmpty()) itemName = "default";
 		
 		if (mRowId == null) {
 			long id = mDbHelper.createShoppingListItem(itemName, itemQuantity, 0, mListRowId);

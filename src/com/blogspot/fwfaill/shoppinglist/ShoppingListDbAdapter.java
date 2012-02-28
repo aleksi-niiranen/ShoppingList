@@ -278,7 +278,7 @@ public class ShoppingListDbAdapter {
 	 * Update the shopping list using the details provided. The shopping list to
 	 * be updated is specified using the rowId, and it is altered to use the title, 
 	 * location, lat and lon values passed in. This method should not be used other than
-	 * passing null values to latitude and longitude columns
+	 * to pass null values to latitude and longitude columns
 	 * @param rowId id of the shopping list to update
 	 * @param title value to set title to
 	 * @param location the location name of the list target

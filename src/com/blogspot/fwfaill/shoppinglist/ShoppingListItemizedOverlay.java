@@ -18,17 +18,28 @@ package com.blogspot.fwfaill.shoppinglist;
 
 import java.util.ArrayList;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 
 import com.google.android.maps.ItemizedOverlay;
+import com.google.android.maps.MapController;
 import com.google.android.maps.OverlayItem;
 
-public class ShoppingListItemizedOverlay extends ItemizedOverlay {
+public class ShoppingListItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 	
 	private ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
+	private Context mContext;
+	private MapController mController;
 
 	public ShoppingListItemizedOverlay(Drawable defaultMarker) {
 		super(boundCenterBottom(defaultMarker));
+	}
+	
+	public ShoppingListItemizedOverlay(Drawable defaultMarker, Context context, MapController controller) {
+		super(boundCenterBottom(defaultMarker));
+		mContext = context;
+		mController = controller;
 	}
 	
 	public void addOverlay(OverlayItem overlay) {
@@ -44,6 +55,22 @@ public class ShoppingListItemizedOverlay extends ItemizedOverlay {
 	@Override
 	public int size() {
 		return mOverlays.size();
+	}
+	
+	@Override
+	protected boolean onTap(int index) {
+		OverlayItem item = mOverlays.get(index);
+		mController.animateTo(item.getPoint());
+		mController.setZoom(18);
+		//AlertDialog.Builder dialog = new AlertDialog.Builder(mContext);
+		//dialog.setTitle(item.getTitle());
+		//dialog.show();
+		return true;
+	}
+	
+	public void clear() {
+		mOverlays.clear();
+		populate();
 	}
 
 }

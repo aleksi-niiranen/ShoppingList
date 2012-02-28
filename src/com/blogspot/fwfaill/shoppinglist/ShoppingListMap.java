@@ -46,6 +46,7 @@ public class ShoppingListMap extends MapActivity {
 	private ShoppingListDbAdapter mDbHelper;
 	private Geocoder mGeocoder;
 	private FillMapTask mFillMapTask;
+	private long mRowId;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -57,24 +58,36 @@ public class ShoppingListMap extends MapActivity {
 		mMapView.setBuiltInZoomControls(true);
 		mMapOverlays = mMapView.getOverlays();
 		mDrawable = this.getResources().getDrawable(R.drawable.androidmarker);
-		mItemizedOverlay = new ShoppingListItemizedOverlay(mDrawable);
+		mItemizedOverlay = new ShoppingListItemizedOverlay(mDrawable, this, mMapView.getController());
 		mGeocoder = new Geocoder(this);
-		mFillMapTask = new FillMapTask();
 		Bundle extras = getIntent().getExtras();
-		long rowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : 0;
-		fillMap(rowId);
+		mRowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : 0;
+		if (mRowId > 0) fillMap(mRowId);
+		else fillMap();
 	}
 
 	private void fillMap(long rowId) {
+		//clearMapOverlays();
 		Cursor cursor;
-		if (rowId == 0) {
-			cursor = mDbHelper.fetchAllShoppingLists();
-		} 
-		else {
-			cursor = mDbHelper.fetchShoppingList(rowId);
-		}
-		
+		cursor = mDbHelper.fetchShoppingList(rowId);
+		mFillMapTask = new FillMapTask();
 		mFillMapTask.execute(cursor);
+	}
+	
+	private void fillMap() {
+		//clearMapOverlays();
+		Cursor cursor;
+		cursor = mDbHelper.fetchAllShoppingLists();
+		mFillMapTask = new FillMapTask();
+		mFillMapTask.execute(cursor);
+	}
+	
+	private void clearMapOverlays() {
+		if (!mMapOverlays.isEmpty()) {
+			mMapOverlays.clear();
+			mItemizedOverlay.clear();
+			mMapView.invalidate();
+		}
 	}
 
 	@Override
@@ -89,10 +102,16 @@ public class ShoppingListMap extends MapActivity {
 	}
 	
 	@Override
-	public void onBackPressed() {
-		// cancel FillMapTask
+	protected void onPause() {
+		super.onPause();
 		mFillMapTask.cancel(true);
-		super.onBackPressed();
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (mRowId > 0) fillMap(mRowId);
+		else fillMap();
 	}
 	
 	private class FillMapTask extends AsyncTask<Cursor, Void, Void> {
@@ -115,7 +134,7 @@ public class ShoppingListMap extends MapActivity {
 								int lat = (int) (address.get(0).getLatitude() * 1e6);
 								int lon = (int) (address.get(0).getLongitude() * 1e6);
 								GeoPoint point = new GeoPoint(lat, lon);
-								OverlayItem overlayItem = new OverlayItem(point, "", "");
+								OverlayItem overlayItem = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)), "");
 								mItemizedOverlay.addOverlay(overlayItem);
 								// update coordinates in database
 								mDbHelper.updateShoppingList(params[0].getLong(params[0].getColumnIndexOrThrow(
@@ -126,14 +145,14 @@ public class ShoppingListMap extends MapActivity {
 						} catch (IllegalArgumentException e) {
 							Log.e("ShoppingListMap", "location is null");
 						} catch (IllegalStateException e) {
-							Log.e("EditList", "no coordinates assigned to address");
+							Log.e("ShoppingListMap", "no coordinates assigned to address");
 						}
 					} else {
 						// coordinates found from database
 						int lat = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT));
 						int lon = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LON));
 						GeoPoint point = new GeoPoint(lat, lon);
-						OverlayItem overlayItem = new OverlayItem(point, "", "");
+						OverlayItem overlayItem = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)), "");
 						mItemizedOverlay.addOverlay(overlayItem);
 					}
 					publishProgress();
