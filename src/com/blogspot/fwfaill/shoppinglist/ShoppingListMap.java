@@ -41,8 +41,7 @@ public class ShoppingListMap extends MapActivity {
 
 	private MapView mMapView;
 	private List<Overlay> mMapOverlays;
-	private Drawable mDrawable;
-	private ShoppingListItemizedOverlay mItemizedOverlay;
+	private Drawable mMapMarker;
 	private ShoppingListDbAdapter mDbHelper;
 	private Geocoder mGeocoder;
 	private FillMapTask mFillMapTask;
@@ -57,8 +56,7 @@ public class ShoppingListMap extends MapActivity {
 		mMapView = (MapView) findViewById(R.id.mapview);
 		mMapView.setBuiltInZoomControls(true);
 		mMapOverlays = mMapView.getOverlays();
-		mDrawable = this.getResources().getDrawable(R.drawable.androidmarker);
-		mItemizedOverlay = new ShoppingListItemizedOverlay(mDrawable, this, mMapView.getController());
+		mMapMarker = this.getResources().getDrawable(R.drawable.androidmarker);
 		mGeocoder = new Geocoder(this);
 		Bundle extras = getIntent().getExtras();
 		mRowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : 0;
@@ -67,7 +65,6 @@ public class ShoppingListMap extends MapActivity {
 	}
 
 	private void fillMap(long rowId) {
-		//clearMapOverlays();
 		Cursor cursor;
 		cursor = mDbHelper.fetchShoppingList(rowId);
 		mFillMapTask = new FillMapTask();
@@ -75,7 +72,6 @@ public class ShoppingListMap extends MapActivity {
 	}
 	
 	private void fillMap() {
-		//clearMapOverlays();
 		Cursor cursor;
 		cursor = mDbHelper.fetchAllShoppingLists();
 		mFillMapTask = new FillMapTask();
@@ -85,7 +81,6 @@ public class ShoppingListMap extends MapActivity {
 	private void clearMapOverlays() {
 		if (!mMapOverlays.isEmpty()) {
 			mMapOverlays.clear();
-			mItemizedOverlay.clear();
 			mMapView.invalidate();
 		}
 	}
@@ -116,6 +111,12 @@ public class ShoppingListMap extends MapActivity {
 	
 	private class FillMapTask extends AsyncTask<Cursor, Void, Void> {
 		
+		private ShoppingListItemizedOverlay mItemizedOverlay;
+		
+		public FillMapTask() {
+			mItemizedOverlay = new ShoppingListItemizedOverlay(mMapMarker, mMapView);
+		}
+		
 		@Override
 		protected Void doInBackground(Cursor... params) {
 			startManagingCursor(params[0]);
@@ -134,7 +135,7 @@ public class ShoppingListMap extends MapActivity {
 								int lat = (int) (address.get(0).getLatitude() * 1e6);
 								int lon = (int) (address.get(0).getLongitude() * 1e6);
 								GeoPoint point = new GeoPoint(lat, lon);
-								OverlayItem overlayItem = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)), "");
+								OverlayItem overlayItem = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)), params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LOCATION)));
 								mItemizedOverlay.addOverlay(overlayItem);
 								// update coordinates in database
 								mDbHelper.updateShoppingList(params[0].getLong(params[0].getColumnIndexOrThrow(
@@ -152,7 +153,7 @@ public class ShoppingListMap extends MapActivity {
 						int lat = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT));
 						int lon = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LON));
 						GeoPoint point = new GeoPoint(lat, lon);
-						OverlayItem overlayItem = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)), "");
+						OverlayItem overlayItem = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_TITLE)), params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LOCATION)));
 						mItemizedOverlay.addOverlay(overlayItem);
 					}
 					publishProgress();
@@ -163,6 +164,7 @@ public class ShoppingListMap extends MapActivity {
 		
 		@Override
 		protected void onProgressUpdate(Void... params) {
+			clearMapOverlays();
 			if (mItemizedOverlay.size() > 0) mMapOverlays.add(mItemizedOverlay);
 		}
 	}

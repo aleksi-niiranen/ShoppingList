@@ -18,28 +18,40 @@ package com.blogspot.fwfaill.shoppinglist;
 
 import java.util.ArrayList;
 
-import android.app.AlertDialog;
-import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
+import android.view.ViewGroup.LayoutParams;
 
+import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapController;
+import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
 
 public class ShoppingListItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 	
 	private ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
-	private Context mContext;
+	private MapView mMapView;
+	private BalloonOverlayView mBalloonView;
+	private View mClickRegion;
+	private View mCloseRegion;
+	private int mBalloonBottomOffset;
+	private int mCurrentFocusedIndex;
+	private OverlayItem mCurrentFocusedItem;
 	private MapController mController;
 
 	public ShoppingListItemizedOverlay(Drawable defaultMarker) {
 		super(boundCenterBottom(defaultMarker));
 	}
 	
-	public ShoppingListItemizedOverlay(Drawable defaultMarker, Context context, MapController controller) {
+	public ShoppingListItemizedOverlay(Drawable defaultMarker, MapView mapView) {
 		super(boundCenterBottom(defaultMarker));
-		mContext = context;
-		mController = controller;
+		mMapView = mapView;
+		mBalloonBottomOffset = ((BitmapDrawable) defaultMarker).getBitmap().getHeight();
+		mController = mMapView.getController();
 	}
 	
 	public void addOverlay(OverlayItem overlay) {
@@ -59,12 +71,15 @@ public class ShoppingListItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 	
 	@Override
 	protected boolean onTap(int index) {
-		OverlayItem item = mOverlays.get(index);
-		mController.animateTo(item.getPoint());
+		mCurrentFocusedIndex = index;
+		mCurrentFocusedItem = mOverlays.get(index);
+		setLastFocusedIndex(index);
+		
+		onBalloonOpen(index);
+		createAndDisplayBalloonOverlay();
+		
+		mController.animateTo(mCurrentFocusedItem.getPoint());
 		mController.setZoom(18);
-		//AlertDialog.Builder dialog = new AlertDialog.Builder(mContext);
-		//dialog.setTitle(item.getTitle());
-		//dialog.show();
 		return true;
 	}
 	
@@ -73,4 +88,112 @@ public class ShoppingListItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 		populate();
 	}
 
+	private boolean createAndDisplayBalloonOverlay() {
+		boolean isRecycled;
+		if (mBalloonView == null) {
+			mBalloonView = createBalloonOverlayView();
+			mClickRegion = (View) mBalloonView.findViewById(R.id.balloon_inner);
+			mClickRegion.setOnTouchListener(createBalloonTouchListener());
+			mCloseRegion = (View) mBalloonView.findViewById(R.id.balloon_close);
+			if (mCloseRegion != null) {
+				mCloseRegion.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						hideBalloon();
+					}
+				});
+			}
+			isRecycled = false;
+		} else {
+			isRecycled = true;
+		}
+		
+		mBalloonView.setVisibility(View.GONE);
+		
+		if (mCurrentFocusedItem != null) mBalloonView.setData(mCurrentFocusedItem);
+		
+		GeoPoint point = mCurrentFocusedItem.getPoint();
+		MapView.LayoutParams params = new MapView.LayoutParams(LayoutParams.WRAP_CONTENT, 
+				LayoutParams.WRAP_CONTENT, point, MapView.LayoutParams.BOTTOM_CENTER);
+		params.mode = MapView.LayoutParams.MODE_MAP;
+		
+		mBalloonView.setVisibility(View.VISIBLE);
+		
+		if (isRecycled) {
+			mBalloonView.setLayoutParams(params);
+		} else {
+			mMapView.addView(mBalloonView, params);
+		}
+		
+		return isRecycled;
+	}
+
+	private OnTouchListener createBalloonTouchListener() {
+		return new OnTouchListener() {
+			float startX;
+			float startY;
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				View l = ((View) v.getParent()).findViewById(R.id.balloon_main);
+				Drawable d = l.getBackground();
+				
+				if (event.getAction() == MotionEvent.ACTION_DOWN) {
+					int[] states = {android.R.attr.state_pressed};
+					if (d.setState(states)) {
+						d.invalidateSelf();
+					}
+					return true;
+				} else if (event.getAction() == MotionEvent.ACTION_UP) {
+					int newStates[] = {};
+					if (d.setState(newStates)) {
+						d.invalidateSelf();
+					}
+					if (Math.abs(startX - event.getX()) < 40 &&
+							Math.abs(startY - event.getY()) < 40) {
+						onBalloonTap(mCurrentFocusedIndex, mCurrentFocusedItem);
+					}
+					return true;
+				} else {
+					return false;
+				}
+			}
+		};
+	}
+
+	protected boolean onBalloonTap(int index, OverlayItem item) {
+		return false;
+	}
+	
+	protected void onBalloonOpen(int index) {
+		
+	}
+	
+	public void hideBalloon() {
+		if (mBalloonView != null) {
+			mBalloonView.setVisibility(View.GONE);
+		}
+		mCurrentFocusedItem = null;
+	}
+	
+	@Override
+	public OverlayItem getFocus() {
+		return mCurrentFocusedItem;
+	}
+	
+	@Override
+	public void setFocus(OverlayItem item) {
+		super.setFocus(item);
+		mCurrentFocusedIndex = getLastFocusedIndex();
+		mCurrentFocusedItem = item;
+		if (mCurrentFocusedItem == null) {
+			hideBalloon();
+		} else {
+			createAndDisplayBalloonOverlay();
+		}
+	}
+
+	private BalloonOverlayView createBalloonOverlayView() {
+		return new BalloonOverlayView(mMapView.getContext(), mBalloonBottomOffset);
+	}
 }
