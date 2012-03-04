@@ -16,9 +16,11 @@
     <string name="item_name">Item</string>
     <string name="item_quantity">Quantity</string>
     <string name="locatebutton">Locate button</string>
+    <string name="close">Close</string>
+    <string name="due_date">Select due date</string>
 
     <string name="shoppinglistdb_onCreate">"
-        create table shoppinglist (_id integer primary key autoincrement, title text not null, location text, latitude integer, longitude integer);
+        create table shoppinglist (_id integer primary key autoincrement, title text not null, location text, latitude integer, longitude integer, due_date integer not null);
 		create table shoppinglistitem (_id integer primary key autoincrement, item_title text not null, quantity text, picked_up integer not null, list_id integer not null, foreign key(list_id) references shoppinglist(_id) on delete cascade on update cascade);
 		"	</string>
 	

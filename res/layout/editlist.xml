@@ -34,7 +34,7 @@
         
         <EditText 
         android:id="@+id/txtLocation"
-        android:layout_width="match_parent"
+        android:layout_width="0dip"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:inputType="text"/>
@@ -44,12 +44,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_action_locate"
-        android:contentDescription="@string/locatebutton"
-        android:layout_weight="1" />
+        android:contentDescription="@string/locatebutton"/>
         
     </LinearLayout>
     
 
+    
     <Button
         android:id="@+id/btnSaveList"
         android:layout_width="wrap_content"
@@ -70,5 +70,13 @@
         android:layout_height="wrap_content"
         android:layout_above="@id/btnAddItem"
         android:layout_below="@id/btnSaveList" />
+
+    <Button
+        android:id="@+id/btnDueDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/locationBar"
+        android:layout_toRightOf="@id/btnSaveList"
+        android:text= "@string/due_date" />
 
 </RelativeLayout>

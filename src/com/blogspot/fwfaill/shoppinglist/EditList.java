@@ -16,6 +16,10 @@
 
 package com.blogspot.fwfaill.shoppinglist;
 
+import java.util.Calendar;
+
+import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -33,6 +37,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.Button;
 import android.widget.CheckedTextView;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -45,9 +50,6 @@ import android.widget.TextView;
  *
  */
 public class EditList extends ListActivity {
-
-	private static final int ACTIVITY_CREATE = 0;
-	private static final int ACTIVITY_EDIT = 1;
 
 	// for context menu
 	private static final int EDIT_ID = R.id.edititem;
@@ -62,6 +64,29 @@ public class EditList extends ListActivity {
 	// if the value was changed and new coordinates have to
 	// be calculated
 	private String mOldLocation;
+	
+	private int mYear;
+	private int mMonth;
+	private int mDay;
+	static final int DATE_DIALOG_ID = 0;
+	private Button mSaveList;
+	private Button mDueDate;
+	private Button mAddItem;
+	private ImageButton mLocate;
+	private Calendar mCalendar;
+	
+	private DatePickerDialog.OnDateSetListener mDateSetListener =
+			new DatePickerDialog.OnDateSetListener() {
+				
+				@Override
+				public void onDateSet(DatePicker view, int year, int monthOfYear,
+						int dayOfMonth) {
+					mYear = year;
+					mMonth = monthOfYear;
+					mDay = dayOfMonth;
+					updateDateButton();
+				}
+			};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -84,15 +109,22 @@ public class EditList extends ListActivity {
 			Bundle extras = getIntent().getExtras();
 			mRowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : null;
 		}
-
+		
+		mDueDate = (Button) findViewById(R.id.btnDueDate);
+		mCalendar = Calendar.getInstance();
+		mYear = mCalendar.get(Calendar.YEAR);
+		mMonth = mCalendar.get(Calendar.MONTH);
+		mDay = mCalendar.get(Calendar.DAY_OF_MONTH);
+		
 		populateFields();
 		registerForContextMenu(getListView());
 
-		Button saveList = (Button) findViewById(R.id.btnSaveList);
-		Button addItem = (Button) findViewById(R.id.btnAddItem);
-		ImageButton locate = (ImageButton) findViewById(R.id.btnLocate);
+		mSaveList = (Button) findViewById(R.id.btnSaveList);
+		
+		mAddItem = (Button) findViewById(R.id.btnAddItem);
+		mLocate = (ImageButton) findViewById(R.id.btnLocate);
 
-		saveList.setOnClickListener(new View.OnClickListener() {
+		mSaveList.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -100,8 +132,16 @@ public class EditList extends ListActivity {
 				finish();
 			}
 		});
+		
+		mDueDate.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				showDialog(DATE_DIALOG_ID);
+			}
+		});
 
-		addItem.setOnClickListener(new View.OnClickListener() {
+		mAddItem.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -109,13 +149,31 @@ public class EditList extends ListActivity {
 			}
 		});
 
-		locate.setOnClickListener(new View.OnClickListener() {
+		mLocate.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
 				showMap();
 			}
 		});
+	}
+	
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		switch (id) {
+		case DATE_DIALOG_ID:
+			return new DatePickerDialog(this, mDateSetListener, mYear, mMonth, mDay);
+		}
+		return null;
+	}
+	
+	private void updateDateButton() {
+		mDueDate.setText(new StringBuilder()
+		.append("Due date: ")
+		.append(mDay).append(".")
+		// Month is 0 based so add 1
+		.append(mMonth + 1).append(".")
+		.append(mYear));
 	}
 
 	private void showMap() {
@@ -131,7 +189,7 @@ public class EditList extends ListActivity {
 		saveState();
 		Intent i = new Intent(this, EditItem.class);
 		i.putExtra("listId", mRowId);
-		startActivityForResult(i, ACTIVITY_CREATE);
+		startActivity(i);
 	}
 
 	private void populateFields() {
@@ -144,6 +202,13 @@ public class EditList extends ListActivity {
 			mLocationText.setText(shoppingList.getString(shoppingList.getColumnIndexOrThrow(
 					ShoppingListDbAdapter.KEY_LOCATION)));
 			mOldLocation = mLocationText.getText().toString();
+			// fetch date
+			long dateInMilliseconds = shoppingList.getLong(shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_DUE_DATE)) * 1000;
+			mCalendar.setTimeInMillis(dateInMilliseconds);
+			mYear = mCalendar.get(Calendar.YEAR);
+			mMonth = mCalendar.get(Calendar.MONTH);
+			mDay = mCalendar.get(Calendar.DAY_OF_MONTH);
+			updateDateButton();
 			// fetch coordinates
 			if (!shoppingList.isNull(shoppingList.getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT)))
 				shoppingList.getInt(shoppingList.getColumnIndexOrThrow(
@@ -181,22 +246,26 @@ public class EditList extends ListActivity {
 	private void saveState() {
 		String listTitle = mListTitleText.getText().toString();
 		String location = mLocationText.getText().toString();
+		mCalendar.set(Calendar.YEAR, mYear);
+		mCalendar.set(Calendar.MONTH, mMonth);
+		mCalendar.set(Calendar.DAY_OF_MONTH, mDay);
+		long dateInMilliseconds = mCalendar.getTimeInMillis();
 		// set default value if listTitle is empty string
-		// list items with empty title can't be tapped
+		// list items with empty title can't be selected
 		if (listTitle.isEmpty()) listTitle = "default";
 		
 		if (mRowId == null) {
-			long id = mDbHelper.createShoppingList(listTitle, location);
+			long id = mDbHelper.createShoppingList(listTitle, location, dateInMilliseconds);
 			if (id > 0) {
 				mRowId = id;
 			}
 		} else {
 			if (mOldLocation.equalsIgnoreCase(location)) {
 				// location was changed, set latitude and longitude to null
-				mDbHelper.updateShoppingList(mRowId, listTitle, location, null, null);
+				mDbHelper.updateShoppingList(mRowId, listTitle, location, null, null, dateInMilliseconds);
 			}
 			else {
-				mDbHelper.updateShoppingList(mRowId, listTitle, location);
+				mDbHelper.updateShoppingList(mRowId, listTitle, location, dateInMilliseconds);
 			}
 		}
 	}
@@ -217,7 +286,7 @@ public class EditList extends ListActivity {
 			Intent i = new Intent(this, EditItem.class);
 			i.putExtra(ShoppingListDbAdapter.KEY_ROWID, info.id);
 			i.putExtra("listId", mRowId);
-			startActivityForResult(i, ACTIVITY_EDIT);
+			startActivity(i);
 			return true;
 		case DELETE_ID:
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
@@ -242,12 +311,6 @@ public class EditList extends ListActivity {
 			nameText.setPaintFlags(nameText.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
 			quantityText.setPaintFlags(quantityText.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
 		}
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-		super.onActivityResult(requestCode, resultCode, intent);
-		populateFields();
 	}
 
 	@Override

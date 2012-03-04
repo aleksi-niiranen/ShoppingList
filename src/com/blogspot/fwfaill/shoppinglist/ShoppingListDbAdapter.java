@@ -34,11 +34,12 @@ public class ShoppingListDbAdapter {
 	public static final String KEY_ROWID = "_id";
 	public static final String KEY_TITLE = "title";
 	public static final String KEY_LOCATION = "location";
+	public static final String KEY_LAT = "latitude";
+	public static final String KEY_LON = "longitude";
+	public static final String KEY_DUE_DATE = "due_date";
 	public static final String KEY_ITEM_TITLE = "item_title";
 	public static final String KEY_QUANTITY = "quantity";
 	public static final String KEY_PICKED_UP = "picked_up";
-	public static final String KEY_LAT = "latitude";
-	public static final String KEY_LON = "longitude";
 	public static final String KEY_LIST_ID = "list_id";
 	
 	private static final String TAG = "ShoppingListDbAdapter";
@@ -48,7 +49,7 @@ public class ShoppingListDbAdapter {
 	private static final String DATABASE_NAME = "shoppinglistdb";
 	private static final String DATABASE_TABLE_LIST = "shoppinglist";
 	private static final String DATABASE_TABLE_ITEM = "shoppinglistitem";
-	private static final int DATABASE_VERSION = 7;
+	private static final int DATABASE_VERSION = 8;
 	
 	private final Context mContext;
 	
@@ -62,17 +63,7 @@ public class ShoppingListDbAdapter {
 		
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			String[] sql = context.getString(R.string.shoppinglistdb_onCreate).split("\n");
-	        db.beginTransaction();
-	        try {
-	            // Create tables & test data
-	            execMultipleSQL(db, sql);
-	            db.setTransactionSuccessful();
-	        } catch (SQLException e) {
-	            Log.e("Error creating tables and debug data", e.toString());
-	        } finally {
-	            db.endTransaction();
-	        }
+			createDb(db);
 		}
 		
 		@Override
@@ -91,7 +82,21 @@ public class ShoppingListDbAdapter {
 	        } finally {
 	            db.endTransaction();
 	        }
-			onCreate(db);
+			createDb(db);
+		}
+		
+		private void createDb(SQLiteDatabase db) {
+			String[] sql = context.getString(R.string.shoppinglistdb_onCreate).split("\n");
+	        db.beginTransaction();
+	        try {
+	            // Create tables & test data
+	            execMultipleSQL(db, sql);
+	            db.setTransactionSuccessful();
+	        } catch (SQLException e) {
+	            Log.e("Error creating tables and debug data", e.toString());
+	        } finally {
+	            db.endTransaction();
+	        }
 		}
 		
 		/**
@@ -140,12 +145,14 @@ public class ShoppingListDbAdapter {
 	 * a -1 to indicate failure
 	 * @param title the list title
 	 * @param location the location of list target (e.g. "Turuntie 1, Salo")
+	 * @param dueDate the due date of the list in milliseconds
 	 * @return rowId or -1 if failed
 	 */
-	public long createShoppingList(String title, String location) {
+	public long createShoppingList(String title, String location, long dueDate) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_TITLE, title);
 		initialValues.put(KEY_LOCATION, location);
+		initialValues.put(KEY_DUE_DATE, (dueDate / 1000));
 		
 		return mDb.insert(DATABASE_TABLE_LIST, null, initialValues);
 	}
@@ -192,7 +199,7 @@ public class ShoppingListDbAdapter {
 	 */
 	public Cursor fetchAllShoppingLists() {
 		return mDb.query(DATABASE_TABLE_LIST, new String[] {
-				KEY_ROWID, KEY_TITLE, KEY_LOCATION, KEY_LAT, KEY_LON}, null, null, null, null, null);
+				KEY_ROWID, KEY_TITLE, KEY_LOCATION, KEY_LAT, KEY_LON, KEY_DUE_DATE}, null, null, null, null, null);
 	}
 	
 	/**
@@ -214,7 +221,7 @@ public class ShoppingListDbAdapter {
 	 */
 	public Cursor fetchShoppingList(long rowId) throws SQLException {
 		Cursor cursor = mDb.query(true, DATABASE_TABLE_LIST, 
-				new String[] {KEY_ROWID, KEY_TITLE, KEY_LOCATION, KEY_LAT, KEY_LON}, 
+				new String[] {KEY_ROWID, KEY_TITLE, KEY_LOCATION, KEY_LAT, KEY_LON, KEY_DUE_DATE}, 
 				KEY_ROWID + "=" + rowId, null, null, null, null, null);
 		if (cursor != null) {
 			cursor.moveToFirst();
@@ -244,12 +251,14 @@ public class ShoppingListDbAdapter {
 	 * @param rowId id of the shopping list to update
 	 * @param title value to set title to
 	 * @param location the location name of the list target
+	 * @param dueDate the due date of the list in milliseconds
 	 * @return true if the shopping list was successfully updated, false otherwise
 	 */
-	public boolean updateShoppingList(long rowId, String title, String location) {
+	public boolean updateShoppingList(long rowId, String title, String location, long dueDate) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_TITLE, title);
 		args.put(KEY_LOCATION, location);
+		args.put(KEY_DUE_DATE, (dueDate / 1000));
 		
 		return mDb.update(DATABASE_TABLE_LIST, args, KEY_ROWID + "=" + rowId, null) > 0;
 	}
@@ -284,12 +293,14 @@ public class ShoppingListDbAdapter {
 	 * @param location the location name of the list target
 	 * @param lat latitude of address got from location name
 	 * @param lon longitude of address got from location name
+	 * @param dueDate the due date of the list in milliseconds
 	 * @return true if the shopping list was successfully updated, false otherwise
 	 */
-	public boolean updateShoppingList(long rowId, String title, String location, Integer lat, Integer lon) {
+	public boolean updateShoppingList(long rowId, String title, String location, Integer lat, Integer lon, long dueDate) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_TITLE, title);
 		args.put(KEY_LOCATION, location);
+		args.put(KEY_DUE_DATE, (dueDate / 1000));
 		if (lat == null || lon == null) {
 			args.putNull(KEY_LAT);
 			args.putNull(KEY_LON);
