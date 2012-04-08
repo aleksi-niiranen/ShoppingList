@@ -4,16 +4,17 @@
     android:versionCode="2"
     android:versionName="1.1" >
 
-    <uses-sdk android:minSdkVersion="10"
+    <uses-sdk
+        android:minSdkVersion="10"
         android:targetSdkVersion="14" />
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"> 
+        android:label="@string/app_name" >
         <activity
-            android:name=".ShoppingList"
+            android:name=".activities.ShoppingListMain"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,11 +22,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".EditList" />
-        <activity android:name=".EditItem" />
-        <activity android:name=".ShoppingListMap" />
-        
-        <uses-library android:name="com.google.android.maps"/>
+        <activity android:name=".activities.EditList">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <data android:scheme="com.blogspot.fwfaill.shoppinglist.activities" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".activities.EditItem" />
+        <activity android:name=".activities.ShoppingListMap" />
+
+        <uses-library android:name="com.google.android.maps" />
     </application>
 
 </manifest>

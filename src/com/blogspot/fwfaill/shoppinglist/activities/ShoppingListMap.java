@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.blogspot.fwfaill.shoppinglist;
+package com.blogspot.fwfaill.shoppinglist.activities;
 
 import java.io.IOException;
 import java.util.Calendar;
@@ -28,6 +28,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.blogspot.fwfaill.shoppinglist.R;
+import com.blogspot.fwfaill.shoppinglist.util.IdGeoPoint;
+import com.blogspot.fwfaill.shoppinglist.util.ShoppingListDbAdapter;
+import com.blogspot.fwfaill.shoppinglist.util.ShoppingListItemizedOverlay;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
@@ -121,8 +125,9 @@ public class ShoppingListMap extends MapActivity {
 			fillMap();
 	}
 
-	private class FillMapTask extends AsyncTask<Cursor, Void, Void> {
+	private class FillMapTask extends AsyncTask<Cursor, Void, GeoPoint> {
 
+		private static final long FIVE_DAYS_IN_MILLISECONDS = 432000000;
 		private ShoppingListItemizedOverlay mGreenOverlay;
 		private ShoppingListItemizedOverlay mOrangeOverlay;
 		private ShoppingListItemizedOverlay mRedOverlay;
@@ -137,8 +142,9 @@ public class ShoppingListMap extends MapActivity {
 		}
 
 		@Override
-		protected Void doInBackground(Cursor... params) {
+		protected GeoPoint doInBackground(Cursor... params) {
 			startManagingCursor(params[0]);
+			IdGeoPoint point = null;
 
 			if (params[0].moveToFirst()) {
 				do {
@@ -155,16 +161,18 @@ public class ShoppingListMap extends MapActivity {
 								Log.i(TAG, "geocoding");
 								int lat = (int) (address.get(0).getLatitude() * 1e6);
 								int lon = (int) (address.get(0).getLongitude() * 1e6);
-								GeoPoint point = new GeoPoint(lat, lon);
+								point = new IdGeoPoint(params[0].getLong(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_ROWID)), lat, lon);
 								item = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(
 										ShoppingListDbAdapter.KEY_TITLE)), params[0].getString(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LOCATION)));
 								// update coordinates in database
 								mDbHelper.updateShoppingList(params[0].getLong(params[0].getColumnIndexOrThrow(
 										ShoppingListDbAdapter.KEY_ROWID)), lat, lon);
 							}
+							// TODO: make proper exception handling
 						} catch (IOException e) {
 							Log.e(TAG, "service unavailable");
 						} catch (IllegalArgumentException e) {
+							// this shouldn't appear because location is passed as empty string if field is left empty
 							Log.e(TAG, "location is null");
 						} catch (IllegalStateException e) {
 							Log.e(TAG, "no coordinates assigned to address");
@@ -173,7 +181,7 @@ public class ShoppingListMap extends MapActivity {
 						// coordinates found from database
 						int lat = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LAT));
 						int lon = params[0].getInt(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_LON));
-						GeoPoint point = new GeoPoint(lat, lon);
+						point = new IdGeoPoint(params[0].getLong(params[0].getColumnIndexOrThrow(ShoppingListDbAdapter.KEY_ROWID)), lat, lon);
 						item = new OverlayItem(point, params[0].getString(params[0].getColumnIndexOrThrow(
 								ShoppingListDbAdapter.KEY_TITLE)), params[0].getString(params[0].getColumnIndexOrThrow(
 										ShoppingListDbAdapter.KEY_LOCATION)));
@@ -183,7 +191,7 @@ public class ShoppingListMap extends MapActivity {
 						if (dueDateInMilliseconds < mTodayInMilliseconds) {
 							mRedOverlay.addOverlay(item);
 						} else if (dueDateInMilliseconds == mTodayInMilliseconds || 
-								(dueDateInMilliseconds - mTodayInMilliseconds) < 432000000) { // 5 days in milliseconds
+								(dueDateInMilliseconds - mTodayInMilliseconds) <= FIVE_DAYS_IN_MILLISECONDS) { // 5 days in milliseconds
 							mOrangeOverlay.addOverlay(item);
 						} else {
 							mGreenOverlay.addOverlay(item);
@@ -193,7 +201,7 @@ public class ShoppingListMap extends MapActivity {
 					publishProgress();
 				} while (params[0].moveToNext());
 			}
-			return null;
+			return params[0].getCount() > 1 ? null : point;
 		}
 
 		@Override
@@ -202,6 +210,14 @@ public class ShoppingListMap extends MapActivity {
 			if (mGreenOverlay.size() > 0) mMapOverlays.add(mGreenOverlay);
 			if (mOrangeOverlay.size() > 0) mMapOverlays.add(mOrangeOverlay);
 			if (mRedOverlay.size() > 0) mMapOverlays.add(mRedOverlay);
+		}
+		
+		@Override
+		protected void onPostExecute(GeoPoint result) {
+			if (result != null) {
+				mMapView.getController().animateTo(result);
+				mMapView.getController().setZoom(18);
+			}
 		}
 	}
 }

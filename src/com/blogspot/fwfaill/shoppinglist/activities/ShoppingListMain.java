@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.blogspot.fwfaill.shoppinglist;
+package com.blogspot.fwfaill.shoppinglist.activities;
 
 import android.app.ListActivity;
 import android.content.Intent;
@@ -26,16 +26,19 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
-import android.widget.AdapterView.AdapterContextMenuInfo;
+
+import com.blogspot.fwfaill.shoppinglist.R;
+import com.blogspot.fwfaill.shoppinglist.util.ShoppingListDbAdapter;
 
 /**
  * 
  * @author Aleksi Niiranen
  *
  */
-public class ShoppingList extends ListActivity {
+public class ShoppingListMain extends ListActivity {
 	private static final int ACTIVITY_CREATE = 0;
 	private static final int ACTIVITY_EDIT = 1;
 

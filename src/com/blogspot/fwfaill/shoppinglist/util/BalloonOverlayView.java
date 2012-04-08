@@ -1,7 +1,8 @@
-package com.blogspot.fwfaill.shoppinglist;
+package com.blogspot.fwfaill.shoppinglist.util;
 
-import com.google.android.maps.OverlayItem;
 import android.content.Context;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,11 +11,15 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.blogspot.fwfaill.shoppinglist.R;
+import com.google.android.maps.OverlayItem;
+
 public class BalloonOverlayView extends FrameLayout {
 
 	private LinearLayout mLayout;
 	private TextView mItemTitle;
 	private TextView mItemSnippet;
+	private TextView mDetails;
 	
 	public BalloonOverlayView(Context context, int balloonBottomOffset) {
 		super(context);
@@ -27,7 +32,7 @@ public class BalloonOverlayView extends FrameLayout {
 		setupView(context, mLayout);
 		
 		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+				android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
 		params.gravity = Gravity.NO_GRAVITY;
 		
 		addView(mLayout, params);
@@ -38,6 +43,7 @@ public class BalloonOverlayView extends FrameLayout {
 		View v = inflater.inflate(R.layout.balloonoverlay, parent);
 		mItemTitle = (TextView) v.findViewById(R.id.balloon_item_title);
 		mItemSnippet = (TextView) v.findViewById(R.id.balloon_item_snippet);
+		mDetails = (TextView) v.findViewById(R.id.details_text);
 	}
 	
 	public void setData(OverlayItem item) {
@@ -46,9 +52,13 @@ public class BalloonOverlayView extends FrameLayout {
 	}
 	
 	private void setBalloonData(OverlayItem item, ViewGroup parent) {
+		IdGeoPoint point = (IdGeoPoint) item.getPoint();
+		long id = point.getId();
 		mItemTitle.setVisibility(VISIBLE);
 		mItemTitle.setText(item.getTitle());
 		mItemSnippet.setVisibility(VISIBLE);
 		mItemSnippet.setText(item.getSnippet());
+		mDetails.setText(Html.fromHtml("<a href=\"com.blogspot.fwfaill.shoppinglist.activities://EditList/" + id + "\">Details</a>"));
+		mDetails.setMovementMethod(LinkMovementMethod.getInstance());
 	}
 }

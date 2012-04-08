@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.blogspot.fwfaill.shoppinglist;
+package com.blogspot.fwfaill.shoppinglist.activities;
 
 import android.app.Activity;
 import android.database.Cursor;
@@ -22,6 +22,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import com.blogspot.fwfaill.shoppinglist.R;
+import com.blogspot.fwfaill.shoppinglist.util.ShoppingListDbAdapter;
 
 /**
  * 

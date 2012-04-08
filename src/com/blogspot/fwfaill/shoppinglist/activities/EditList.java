@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.blogspot.fwfaill.shoppinglist;
+package com.blogspot.fwfaill.shoppinglist.activities;
 
 import java.util.Calendar;
 
@@ -26,7 +26,9 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Paint;
 import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -43,6 +45,9 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
+
+import com.blogspot.fwfaill.shoppinglist.R;
+import com.blogspot.fwfaill.shoppinglist.util.ShoppingListDbAdapter;
 
 /**
  * 
@@ -107,7 +112,12 @@ public class EditList extends ListActivity {
 		mRowId = (savedInstanceState == null) ? null : (Long) savedInstanceState.getSerializable(ShoppingListDbAdapter.KEY_ROWID);
 		if (mRowId == null) {
 			Bundle extras = getIntent().getExtras();
+			Uri data = getIntent().getData();
 			mRowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : null;
+			if (mRowId != null && mRowId == 0) {
+				Log.d("EditList", mRowId.toString());
+				mRowId = data != null ? Long.decode(data.getPath().split("/")[1]) : null;
+			}
 		}
 		
 		mDueDate = (Button) findViewById(R.id.btnDueDate);

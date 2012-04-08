@@ -77,6 +77,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/locationBar"
         android:layout_toRightOf="@id/btnSaveList"
-        android:text= "@string/due_date" />
+        android:text="@string/due_date" />
 
 </RelativeLayout>

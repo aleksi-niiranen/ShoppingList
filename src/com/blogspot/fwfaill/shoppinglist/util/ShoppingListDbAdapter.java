@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.blogspot.fwfaill.shoppinglist;
+package com.blogspot.fwfaill.shoppinglist.util;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -23,6 +23,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+import com.blogspot.fwfaill.shoppinglist.R;
 
 /**
  * 

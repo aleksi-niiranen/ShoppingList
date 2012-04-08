@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.blogspot.fwfaill.shoppinglist;
+package com.blogspot.fwfaill.shoppinglist.util;
 
 import java.util.ArrayList;
 
@@ -25,6 +25,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 
+import com.blogspot.fwfaill.shoppinglist.R;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapController;
@@ -92,9 +93,9 @@ public class ShoppingListItemizedOverlay extends ItemizedOverlay<OverlayItem> {
 		boolean isRecycled;
 		if (mBalloonView == null) {
 			mBalloonView = createBalloonOverlayView();
-			mClickRegion = (View) mBalloonView.findViewById(R.id.balloon_inner);
+			mClickRegion = mBalloonView.findViewById(R.id.balloon_inner);
 			mClickRegion.setOnTouchListener(createBalloonTouchListener());
-			mCloseRegion = (View) mBalloonView.findViewById(R.id.balloon_close);
+			mCloseRegion = mBalloonView.findViewById(R.id.balloon_close);
 			if (mCloseRegion != null) {
 				mCloseRegion.setOnClickListener(new View.OnClickListener() {
 					

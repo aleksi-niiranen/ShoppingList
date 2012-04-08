@@ -18,6 +18,9 @@
     <string name="locatebutton">Locate button</string>
     <string name="close">Close</string>
     <string name="due_date">Select due date</string>
+    <string name="details">EditList</string>
+    <string name="test_title">Test title</string>
+    <string name="test_location">Test location</string>
 
     <string name="shoppinglistdb_onCreate">"
         create table shoppinglist (_id integer primary key autoincrement, title text not null, location text, latitude integer, longitude integer, due_date integer not null);
