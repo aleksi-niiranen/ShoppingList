@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/balloon_main_details"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/mapballoon"
+    android:minWidth="160dip"
+    android:orientation="horizontal"
+    android:baselineAligned="false">
+    
+    <LinearLayout
+        android:id="@id/balloon_inner"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:paddingTop="2dip" >
+
+        <TextView
+            android:id="@id/balloon_item_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/test_title"
+            android:textColor="@android:color/primary_text_light"
+            android:textSize="18.0sp" />
+
+        <TextView
+            android:id="@id/balloon_item_snippet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/test_location_long"
+            android:textColor="@android:color/secondary_text_light"
+            android:textSize="15.0sp" />
+
+        <ListView
+            android:id="@+id/android:list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+        </ListView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:orientation="vertical"
+        android:paddingLeft="20dip"
+        android:paddingTop="2dip" >
+
+        <ImageView
+            android:id="@id/balloon_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/close"
+            android:src="@drawable/exiticon" />
+
+        <TextView
+            android:id="@+id/hide_details_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/hide_details" />
+    </LinearLayout>
+
+</LinearLayout>
