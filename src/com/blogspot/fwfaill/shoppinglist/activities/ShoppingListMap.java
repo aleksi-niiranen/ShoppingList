@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -27,6 +28,9 @@ import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
+import android.view.MotionEvent;
 
 import com.blogspot.fwfaill.shoppinglist.R;
 import com.blogspot.fwfaill.shoppinglist.util.IdGeoPoint;
@@ -43,7 +47,7 @@ import com.google.android.maps.OverlayItem;
  * @author Aleksi Niiranen
  * 
  */
-public class ShoppingListMap extends MapActivity {
+public class ShoppingListMap extends MapActivity implements OnGestureListener {
 
 	private MapView mMapView;
 	private List<Overlay> mMapOverlays;
@@ -54,6 +58,7 @@ public class ShoppingListMap extends MapActivity {
 	private Geocoder mGeocoder;
 	private FillMapTask mFillMapTask;
 	private long mRowId;
+	private GestureDetector mDetector;
 
 	private static final String TAG = "ShoppingListMap";
 
@@ -70,6 +75,7 @@ public class ShoppingListMap extends MapActivity {
 		mOrangeMarker = this.getResources().getDrawable(R.drawable.androidmarkerorange);
 		mRedMarker = this.getResources().getDrawable(R.drawable.androidmarkerred);
 		mGeocoder = new Geocoder(this);
+		mDetector = new GestureDetector(this, this);
 		Bundle extras = getIntent().getExtras();
 		mRowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : 0;
 		if (mRowId > 0)
@@ -191,7 +197,7 @@ public class ShoppingListMap extends MapActivity {
 						if (dueDateInMilliseconds < mTodayInMilliseconds) {
 							mRedOverlay.addOverlay(item);
 						} else if (dueDateInMilliseconds == mTodayInMilliseconds || 
-								(dueDateInMilliseconds - mTodayInMilliseconds) <= FIVE_DAYS_IN_MILLISECONDS) { // 5 days in milliseconds
+								(dueDateInMilliseconds - mTodayInMilliseconds) <= FIVE_DAYS_IN_MILLISECONDS) {
 							mOrangeOverlay.addOverlay(item);
 						} else {
 							mGreenOverlay.addOverlay(item);
@@ -219,5 +225,57 @@ public class ShoppingListMap extends MapActivity {
 				mMapView.getController().setZoom(18);
 			}
 		}
+	}
+	
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent e) {
+		mDetector.onTouchEvent(e);
+		return super.dispatchTouchEvent(e);
+	}
+
+	@Override
+	public boolean onDown(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+			float velocityY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onLongPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+		int x = (int) e.getX();
+		int y = (int) e.getY();
+		Log.i(TAG, "onLongPress " + x + ", " + y);
+		GeoPoint point = mMapView.getProjection().fromPixels(x, y);
+		Log.i(TAG, point.toString());
+		Intent i = new Intent(this, EditList.class);
+		i.putExtra("lat", point.getLatitudeE6());
+		i.putExtra("lon", point.getLongitudeE6());
+		startActivity(i);
+	}
+
+	@Override
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+			float distanceY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onShowPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onSingleTapUp(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

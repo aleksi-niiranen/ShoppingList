@@ -16,7 +16,9 @@
 
 package com.blogspot.fwfaill.shoppinglist.activities;
 
+import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
@@ -25,8 +27,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Paint;
+import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -48,6 +52,7 @@ import android.widget.TextView;
 
 import com.blogspot.fwfaill.shoppinglist.R;
 import com.blogspot.fwfaill.shoppinglist.util.ShoppingListDbAdapter;
+import com.google.android.maps.GeoPoint;
 
 /**
  * 
@@ -55,6 +60,8 @@ import com.blogspot.fwfaill.shoppinglist.util.ShoppingListDbAdapter;
  *
  */
 public class EditList extends ListActivity {
+	
+	private static final String TAG = "EditList";
 
 	// for context menu
 	private static final int EDIT_ID = R.id.edititem;
@@ -69,6 +76,10 @@ public class EditList extends ListActivity {
 	// if the value was changed and new coordinates have to
 	// be calculated
 	private String mOldLocation;
+	private int mLat;
+	private int mLon;
+	private Geocoder mGeocoder;
+	private LocateFromCoordinatesTask mLocateTask;
 	
 	private int mYear;
 	private int mMonth;
@@ -104,7 +115,6 @@ public class EditList extends ListActivity {
 
 		mListTitleText = (EditText) findViewById(R.id.txtShopName);
 		mLocationText = (EditText) findViewById(R.id.txtLocation);
-		new Geocoder(this);
 		// initialize to empty string to avoid NullPointerException
 		// when comparing old and new location
 		mOldLocation = "";
@@ -113,18 +123,20 @@ public class EditList extends ListActivity {
 		if (mRowId == null) {
 			Bundle extras = getIntent().getExtras();
 			Uri data = getIntent().getData();
-			mRowId = extras != null ? extras.getLong(ShoppingListDbAdapter.KEY_ROWID) : null;
-			if (mRowId != null && mRowId == 0) {
-				Log.d("EditList", mRowId.toString());
-				mRowId = data != null ? Long.decode(data.getPath().split("/")[1]) : null;
+			if (extras != null) {
+				mRowId = extras.getLong(ShoppingListDbAdapter.KEY_ROWID);
+				if (mRowId == 0) mRowId = null;
+				mLat = extras.getInt("lat");
+				mLon = extras.getInt("lon");
 			}
+			if (mRowId == null) {
+				mRowId = data != null ? Long.decode(data.getPath().split("/")[1]) : null;
+			}	
 		}
+		mGeocoder = new Geocoder(this);
 		
 		mDueDate = (Button) findViewById(R.id.btnDueDate);
-		mCalendar = Calendar.getInstance();
-		mYear = mCalendar.get(Calendar.YEAR);
-		mMonth = mCalendar.get(Calendar.MONTH);
-		mDay = mCalendar.get(Calendar.DAY_OF_MONTH);
+		initializeCalendar();
 		
 		populateFields();
 		registerForContextMenu(getListView());
@@ -166,6 +178,13 @@ public class EditList extends ListActivity {
 				showMap();
 			}
 		});
+	}
+
+	private void initializeCalendar() {
+		mCalendar = Calendar.getInstance();
+		mYear = mCalendar.get(Calendar.YEAR);
+		mMonth = mCalendar.get(Calendar.MONTH);
+		mDay = mCalendar.get(Calendar.DAY_OF_MONTH);
 	}
 	
 	@Override
@@ -231,6 +250,10 @@ public class EditList extends ListActivity {
 			startManagingCursor(listItemsCursor);
 			mListAdapter = new ShoppingListCursorAdapter(this, listItemsCursor);
 			setListAdapter(mListAdapter);
+		} else {
+			GeoPoint point = new GeoPoint(mLat, mLon);
+			mLocateTask = new LocateFromCoordinatesTask();
+			mLocateTask.execute(point);
 		}
 	}
 
@@ -244,6 +267,7 @@ public class EditList extends ListActivity {
 	@Override
 	protected void onPause() {
 		super.onPause();
+		if (mLocateTask != null) mLocateTask.cancel(true);
 		saveState();
 	}
 
@@ -360,6 +384,33 @@ public class EditList extends ListActivity {
 					ShoppingListDbAdapter.KEY_ITEM_TITLE)));
 			quantityText.setText(cursor.getString(cursor.getColumnIndexOrThrow(
 					ShoppingListDbAdapter.KEY_QUANTITY)));
+		}
+	}
+	
+	private class LocateFromCoordinatesTask extends AsyncTask<GeoPoint, Void, String> {
+
+		@Override
+		protected String doInBackground(GeoPoint... params) {
+			String s = null;
+			try {
+				double lat = params[0].getLatitudeE6() * 1e-6;
+				double lon = params[0].getLongitudeE6() * 1e-6;
+				List<Address> list = mGeocoder.getFromLocation(lat, lon, 1);
+				if (!list.isEmpty()) {
+					s = list.get(0).getAddressLine(0);
+					s += ", " + list.get(0).getAddressLine(1);
+				}
+			} catch (IOException e) {
+				Log.e(TAG, e.getMessage());
+			} catch (IllegalArgumentException e) {
+				Log.e(TAG, e.getMessage());
+			}
+			return s;
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			if (result != null) mLocationText.setText(result);
 		}
 	}
 }

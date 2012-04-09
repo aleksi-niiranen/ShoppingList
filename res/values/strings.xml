@@ -21,6 +21,7 @@
     <string name="details">EditList</string>
     <string name="test_title">Test title</string>
     <string name="test_location">Test location</string>
+    <string name="test_location_long">A really long location name for testing purposes</string>
 
     <string name="shoppinglistdb_onCreate">"
         create table shoppinglist (_id integer primary key autoincrement, title text not null, location text, latitude integer, longitude integer, due_date integer not null);

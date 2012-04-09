@@ -5,13 +5,15 @@
     android:layout_height="wrap_content"
     android:background="@drawable/mapballoon"
     android:minWidth="160dip"
-    android:orientation="horizontal" >
+    android:orientation="horizontal"
+    android:baselineAligned="false" >
 
     <LinearLayout
         android:id="@+id/balloon_inner"
-        android:layout_width="match_parent"
+        android:layout_width="0dip"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:layout_weight="1"
         android:paddingTop="2dip" >
 
         <TextView
@@ -26,7 +28,7 @@
             android:id="@+id/balloon_item_snippet"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/test_location"
+            android:text="@string/test_location_long"
             android:textColor="@android:color/secondary_text_light"
             android:textSize="15.0sp" />
     </LinearLayout>
