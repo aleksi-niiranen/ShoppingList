@@ -4,16 +4,16 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@drawable/mapballoon"
+    android:baselineAligned="false"
     android:minWidth="160dip"
-    android:orientation="horizontal"
-    android:baselineAligned="false">
-    
+    android:orientation="horizontal" >
+
     <LinearLayout
         android:id="@id/balloon_inner"
         android:layout_width="0dip"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:layout_weight="1"
+        android:orientation="vertical"
         android:paddingTop="2dip" >
 
         <TextView
@@ -37,7 +37,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
         </ListView>
-
     </LinearLayout>
 
     <LinearLayout
