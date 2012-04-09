@@ -153,10 +153,16 @@ public class ShoppingListMain extends ListActivity {
 		super.onActivityResult(requestCode, resultCode, intent);
 		fillData();
 	}
-
+	
 	@Override
-	protected void onDestroy() {
-		super.onDestroy();
+	protected void onPause() {
+		super.onPause();
 		mDbHelper.close();
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		mDbHelper.open();
 	}
 }

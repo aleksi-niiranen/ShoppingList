@@ -111,20 +111,16 @@ public class ShoppingListMap extends MapActivity implements OnGestureListener {
 	}
 
 	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mDbHelper.close();
-	}
-
-	@Override
 	protected void onPause() {
 		super.onPause();
 		mFillMapTask.cancel(true);
+		mDbHelper.close();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+		mDbHelper.open();
 		if (mRowId > 0)
 			fillMap(mRowId);
 		else

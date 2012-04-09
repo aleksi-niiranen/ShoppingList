@@ -269,11 +269,13 @@ public class EditList extends ListActivity {
 		super.onPause();
 		if (mLocateTask != null) mLocateTask.cancel(true);
 		saveState();
+		mDbHelper.close();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+		mDbHelper.open();
 		populateFields();
 	}
 
@@ -345,12 +347,6 @@ public class EditList extends ListActivity {
 			nameText.setPaintFlags(nameText.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
 			quantityText.setPaintFlags(quantityText.getPaintFlags() & (~ Paint.STRIKE_THRU_TEXT_FLAG));
 		}
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mDbHelper.close();
 	}
 
 	private class ShoppingListCursorAdapter extends ResourceCursorAdapter {

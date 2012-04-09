@@ -102,11 +102,13 @@ public class EditItem extends Activity {
     protected void onPause() {
         super.onPause();
         saveState();
+        mDbHelper.close();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        mDbHelper.open();
         populateFields();
     }
     
@@ -124,10 +126,4 @@ public class EditItem extends Activity {
 			mDbHelper.updateShoppingListItem(mRowId, itemName, itemQuantity);
 		}
 	}
-    
-    @Override
-    protected void onDestroy() {
-    	super.onDestroy();
-    	mDbHelper.close();
-    }
 }
