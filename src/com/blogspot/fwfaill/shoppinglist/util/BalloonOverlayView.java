@@ -40,10 +40,10 @@ public class BalloonOverlayView extends FrameLayout {
 
 	private void setupView(Context context, ViewGroup parent) {
 		LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View v = inflater.inflate(R.layout.balloonoverlay, parent);
+		View v = inflater.inflate(R.layout.balloonoverlaydetails, parent);
 		mItemTitle = (TextView) v.findViewById(R.id.balloon_item_title);
 		mItemSnippet = (TextView) v.findViewById(R.id.balloon_item_snippet);
-		mDetails = (TextView) v.findViewById(R.id.details_text);
+//		mDetails = (TextView) v.findViewById(R.id.details_text);
 	}
 	
 	public void setData(OverlayItem item) {
@@ -58,7 +58,7 @@ public class BalloonOverlayView extends FrameLayout {
 		mItemTitle.setText(item.getTitle());
 		mItemSnippet.setVisibility(VISIBLE);
 		mItemSnippet.setText(item.getSnippet());
-		mDetails.setText(Html.fromHtml("<a href=\"com.blogspot.fwfaill.shoppinglist.activities://EditList/" + id + "\">Details</a>"));
-		mDetails.setMovementMethod(LinkMovementMethod.getInstance());
+//		mDetails.setText(Html.fromHtml("<a href=\"com.blogspot.fwfaill.shoppinglist.activities://EditList/" + id + "\">Details</a>"));
+//		mDetails.setMovementMethod(LinkMovementMethod.getInstance());
 	}
 }
