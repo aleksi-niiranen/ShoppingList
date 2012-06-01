@@ -1,3 +1,3 @@
-This app is not meant for production use. Currently changes made to the database will destroy all old data.
+This is a playground app for learning Android development.
 
 To build the app in Eclipse, create a new Android project from sources.
